@@ -1,0 +1,7 @@
+#define VERSION_MAJOR   ${VERSION_MAJOR}
+#define VERSION_MINOR   ${VERSION_MINOR}
+#define BUILD_NUMBER    ${BUILD_NUMBER}
+ 
+#define VERSION_STRING  \
+    "${PRODUCT_NAME} ${VERSION_MAJOR}.${VERSION_MINOR}.${BUILD_NUMBER}\n" \
+    "Copyright(C) 2022 ${LICENSE_HOLDER} all rights reserved."
