@@ -33,5 +33,5 @@ add_custom_command(OUTPUT ${VERSION_INFORMATION_HEADER}
 
 # リンクするライブラリの指定
 # Windows環境下だったらws2_32をリンクする
-# find_library(WS2_32_LIBRARY ws2_32)
-# target_link_libraries(out PUBLIC ${WS2_32_LIBRARY})
+find_library(SHLWAPI_LIBRARY shlwapi)
+target_link_libraries(out PUBLIC ${SHLWAPI_LIBRARY})
