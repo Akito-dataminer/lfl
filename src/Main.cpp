@@ -110,6 +110,7 @@ int main( int argc, char * argv [] )
 
   if ( hFind == INVALID_HANDLE_VALUE ) {
     std::cerr << "INVALID_HANDLE_VALUE" << std::endl;
+    FindClose( hFind );
     return -1;
   }
 
