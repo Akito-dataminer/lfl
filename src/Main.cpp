@@ -13,15 +13,25 @@
 #include <minwindef.h>
 #include <string>
 #include <shlwapi.h>
+#include <vector>
 #include <windows.h>
 
-// constexpr char DELIMITER = '\\';
+constexpr char DELIMITER = '\\';
+
+enum class PathTag {
+  ARG,
+  NON_ARG,
+  IMPLICIT,
+  NUM
+};
+
+bool isDirectory( std::string const & path ) { return( PathIsDirectory( path.c_str() ) ); }
 
 // Ensure the path exists.
 class Path {
 public:
   Path() : path_( "" ), exist_( 0 ) {}
-  Path( std::string const & );
+  Path( std::string const &, PathTag );
   ~Path();
 
   Path( const Path & obj ) = default;
@@ -30,24 +40,45 @@ public:
   Path & operator = ( Path && obj ) noexcept = delete;
 
   std::string getPath() const noexcept { return path_; }
+  PathTag getTag() const noexcept { return tag_; }
+  bool isExist() const noexcept { return exist_; }
 private:
   std::string path_;
+  PathTag tag_;
   // Windows API はなるべく呼び出したくないので、
   // すでに検査したパスはもう一度検査しなくてもいいと示したい。
   const bool exist_;
 
-  bool isExist() const noexcept;
+  bool checkExist() const noexcept;
 };
 
-Path::Path( std::string const & path )
-: path_( path ), exist_( isExist() ) {
+Path::Path( std::string const & path, PathTag tag )
+: path_( path ), tag_( tag ), exist_( checkExist() ) {
+  if ( ( path.back() != DELIMITER ) && isDirectory(path) ) {
+    path_ += DELIMITER;
+  }
 }
 
 Path::~Path() {
 }
 
-bool Path::isExist() const noexcept {
+bool Path::checkExist() const noexcept {
   return PathFileExists( path_.c_str() );
+}
+
+bool isDotDirectory( Path const & path ) {
+  std::string path_str = path.getPath();
+
+  // パスの構成要素に'.'かDELIMITER以外が見つかったら、
+  // その時点でカレントディレクトリや親ディレクトリそのものを
+  // 表したパスではない。
+  for ( auto itr : path_str ) {
+    if ( itr != '.' || itr != DELIMITER ) {
+      return 0;
+    }
+  }
+
+  return 1;
 }
 
 class Time : public UTIL::COMPARABLE::CompDef<Time> {
@@ -94,58 +125,88 @@ Time::Time( FILETIME const & time ) {
 Time::~Time() {
 }
 
-int main( int argc, char * argv [] )
-{
-  Path path( ".\\" );
+void makeCandidate( std::vector<std::string> & candidate_directories, Path const & directory_path ) {
+  PathTag tag = directory_path.getTag();
+  std::string path_str = directory_path.getPath();
 
-  if ( argc > 1 ) {
-    std::cerr << "Argument specification is NOT yet implemented" << std::endl;
-    return 0;
+  if ( directory_path.isExist() == true ) {
+    if ( ( tag == PathTag::ARG ) || ( tag == PathTag::IMPLICIT ) ) {
+      candidate_directories.emplace_back( path_str );
+    } else if ( !isDotDirectory( directory_path ) ) {
+      candidate_directories.emplace_back( path_str );
+    }
+  }
+}
+
+int main( int argc, char * argv [] ) {
+  std::vector<Path *> path_list;
+
+  /* build paths list */
+  try {
+    if ( argc == 1 ) {
+      path_list.emplace_back( new Path( ".\\", PathTag::IMPLICIT ) );
+    } else if ( argc > 3 ) {
+      std::cout << "yet unimplemented" << std::endl;
+      return 0;
+    } else {
+      for ( int arg_index = 0; arg_index != argc; ++arg_index ) {
+        path_list.emplace_back( new Path( argv[arg_index], PathTag::ARG ) );
+      }
+    }
+  } catch ( ... ) {
+    std::cerr << "error was occured" << std::endl;
+    for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
+    return -1;
+  }
+
+  // 存在することが確定したパスだけを判定候補に含める
+  std::vector<std::string> exist_directories;
+  for ( auto itr : path_list ) {
+    if ( isDirectory( itr->getPath() ) ) {
+      makeCandidate( exist_directories, *itr );
+    }
   }
 
   WIN32_FIND_DATA path_data;
-
-  std::string wildcard_path = path.getPath() + "*";
-  HANDLE hFind = FindFirstFile( wildcard_path.c_str(), &path_data );
-
-  if ( hFind == INVALID_HANDLE_VALUE ) {
-    std::cerr << "INVALID_HANDLE_VALUE" << std::endl;
-    FindClose( hFind );
-    return -1;
-  }
+  HANDLE hFind;
 
   /* display the file-name had the latest ftLastWriteTime. */
   Time path_time;
   std::string latest_write_path = "";
 
-  do {
-    // この階層や一つ上の階層は必要ないのでスキップ
-    if ( path_data.cFileName[0] == '.' ) {
-      if ( path_data.cFileName[1] == '\0'
-        || ( path_data.cFileName[1] == '.' && path_data.cFileName[2] == '\0' ) ) {
-        if ( FindNextFile( hFind, &path_data ) != 0 ) {
-          continue;
-        } else {
-          break;
-        }
-      }
+  for ( auto itr : exist_directories ) {
+    std::string wildcard_path = itr + "*";
+    hFind = FindFirstFile( wildcard_path.c_str(), &path_data );
+
+    if ( hFind == INVALID_HANDLE_VALUE ) {
+      std::cerr << "INVALID_HANDLE_VALUE" << std::endl;
+
+      FindClose( hFind );
+      for ( auto itr : path_list ) { delete itr; }
+
+      return -1;
     }
 
-    // ここでほしいのは大小関係だけなので、ローカルタイムに変換したり、
-    // SYSTEMTIME構造体に変換したりする必要はない。
-    Time current_path_write = path_data.ftLastWriteTime;
+    /* この時点ですでに、最終更新時刻の検査対象だけのリストが完成しておいてほしい */
+    do {
+      // ここでほしいのは大小関係だけなので、ローカルタイムに変換したり、
+      // SYSTEMTIME構造体に変換したりする必要はない。
+      Time current_path_write = path_data.ftLastWriteTime;
 
-    // debug
-    // std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
-    // std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
+      // debug
+      std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
+      std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
 
-    if ( path_time < current_path_write ) { path_time = current_path_write; latest_write_path = path_data.cFileName; }
-  } while ( FindNextFile( hFind, &path_data ) != 0 );
+      if ( path_time < current_path_write ) { path_time = current_path_write; latest_write_path = path_data.cFileName; }
+    } while ( FindNextFile( hFind, &path_data ) != 0 );
 
-  FindClose( hFind );
+    FindClose( hFind );
+  }
 
   /* display the latest updated file name */
+  std::cout << std::endl;
   std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
 
+  for ( auto itr : path_list ) { delete itr; }
   return 0;
 }
