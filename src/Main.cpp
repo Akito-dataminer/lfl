@@ -208,9 +208,9 @@ int main( int argc, char * argv [] ) {
   }
 
   /* display the latest updated file name */
-  std::cout << std::endl;
-  std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
+  std::cout << latest_write_path << std::endl;
 
   for ( auto itr : path_list ) { delete itr; }
+
   return 0;
 }
