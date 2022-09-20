@@ -25,7 +25,26 @@ enum class PathTag {
   NUM
 };
 
-bool isDirectory( std::string const & path ) { return( PathIsDirectory( path.c_str() ) ); }
+bool isDotDirectory( std::string const & directory_path ) {
+  // パスの構成要素に'.'かDELIMITER以外が見つかったら、
+  // その時点でカレントディレクトリや親ディレクトリそのものを
+  // 表したパスではない。
+  for ( auto itr : directory_path ) {
+    if ( !( ( itr == '.' ) || ( itr == DELIMITER ) ) ) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+bool isDirectory( std::string const & path ) {
+  // '.'とDELIMITERのみで構成されていたら、
+  // その時点でWindows APIを使うまでもなくディレクトリだと分かる。
+  if ( isDotDirectory( path ) ) { return 1; }
+
+  return( PathIsDirectory( path.c_str() ) );
+}
 
 // Ensure the path exists.
 class Path {
@@ -62,24 +81,7 @@ Path::Path( std::string const & path, PathTag tag )
 Path::~Path() {
 }
 
-bool Path::checkExist() const noexcept {
-  return PathFileExists( path_.c_str() );
-}
-
-bool isDotDirectory( Path const & path ) {
-  std::string path_str = path.getPath();
-
-  // パスの構成要素に'.'かDELIMITER以外が見つかったら、
-  // その時点でカレントディレクトリや親ディレクトリそのものを
-  // 表したパスではない。
-  for ( auto itr : path_str ) {
-    if ( itr != '.' || itr != DELIMITER ) {
-      return 0;
-    }
-  }
-
-  return 1;
-}
+bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() ); }
 
 class Time : public UTIL::COMPARABLE::CompDef<Time> {
 public:
@@ -132,7 +134,7 @@ void makeCandidate( std::vector<std::string> & candidate_directories, Path const
   if ( directory_path.isExist() == true ) {
     if ( ( tag == PathTag::ARG ) || ( tag == PathTag::IMPLICIT ) ) {
       candidate_directories.emplace_back( path_str );
-    } else if ( !isDotDirectory( directory_path ) ) {
+    } else if ( !isDotDirectory( path_str ) ) {
       candidate_directories.emplace_back( path_str );
     }
   }
@@ -193,11 +195,13 @@ int main( int argc, char * argv [] ) {
       // SYSTEMTIME構造体に変換したりする必要はない。
       Time current_path_write = path_data.ftLastWriteTime;
 
-      // debug
-      std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
-      std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
+      if ( !isDotDirectory( path_data.cFileName ) ) {
+        // debug
+        std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
+        std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
 
-      if ( path_time < current_path_write ) { path_time = current_path_write; latest_write_path = path_data.cFileName; }
+        if ( path_time < current_path_write ) { path_time = current_path_write; latest_write_path = path_data.cFileName; }
+      }
     } while ( FindNextFile( hFind, &path_data ) != 0 );
 
     FindClose( hFind );
