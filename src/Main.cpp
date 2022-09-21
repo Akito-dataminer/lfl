@@ -197,8 +197,8 @@ int main( int argc, char * argv [] ) {
 
       if ( !isDotDirectory( path_data.cFileName ) ) {
         // debug
-        std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
-        std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
+        // std::cout << path_data.ftLastWriteTime.dwHighDateTime << ", " << path_data.ftLastWriteTime.dwLowDateTime << " : " << path_data.cFileName << std::endl;
+        // std::cout << path_time.getFileTime().dwHighDateTime << ", " << path_time.getFileTime().dwLowDateTime << " : " << latest_write_path << std::endl;
 
         if ( path_time < current_path_write ) { path_time = current_path_write; latest_write_path = path_data.cFileName; }
       }
@@ -207,10 +207,10 @@ int main( int argc, char * argv [] ) {
     FindClose( hFind );
   }
 
+  for ( auto itr : path_list ) { delete itr; }
+
   /* display the latest updated file name */
   std::cout << latest_write_path << std::endl;
-
-  for ( auto itr : path_list ) { delete itr; }
 
   return 0;
 }
