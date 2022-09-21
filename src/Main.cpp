@@ -17,6 +17,30 @@
 #include <windows.h>
 
 constexpr char DELIMITER = '\\';
+constexpr int SPECIFIER_LENGTH = 3; // add the NULL character in the string tail.
+constexpr char OPTION_SPECIFIER[SPECIFIER_LENGTH] = "--";
+
+class Usage {
+public:
+  Usage();
+  ~Usage();
+
+  void display( std::ostream & ost ) { ost << messages_ << std::endl; }
+private:
+  std::string messages_;
+};
+
+Usage::Usage()
+: messages_( "" ) {
+  messages_ += "Usage: lfl [directory]\n";
+  messages_ += "Output one name of the latest updated file in specified directory.\n";
+  messages_ += "default of directory is current directory.\n";
+  messages_ += "\n";
+  messages_ += "Don't support specification of multiple directories yet.\n";
+}
+
+Usage::~Usage() {
+}
 
 enum class PathTag {
   ARG,
@@ -73,7 +97,7 @@ private:
 
 Path::Path( std::string const & path, PathTag tag )
 : path_( path ), tag_( tag ), exist_( checkExist() ) {
-  if ( ( path.back() != DELIMITER ) && isDirectory(path) ) {
+  if ( ( path.back() != DELIMITER ) && isDirectory( path ) ) {
     path_ += DELIMITER;
   }
 }
@@ -82,6 +106,89 @@ Path::~Path() {
 }
 
 bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() ); }
+
+enum class OptionKey {
+  DIRECTORY,
+  HELP,
+  NUM
+};
+
+class CmdOption {
+public:
+  CmdOption( char const * );
+  ~CmdOption();
+
+  OptionKey getKey() const noexcept { return key_; }
+  std::string const & getString() const noexcept { return option_; }
+private:
+  OptionKey key_;
+  std::string option_;
+};
+
+CmdOption::CmdOption( char const * arg ) {
+  const int null_exclude_length = SPECIFIER_LENGTH - 1;
+
+  if ( strlen( arg ) < SPECIFIER_LENGTH ) {
+    key_ = OptionKey::DIRECTORY;
+    option_ = arg;
+  } else if ( strncmp( arg, OPTION_SPECIFIER, null_exclude_length ) == 0 ) {
+    char const * key_head = arg + null_exclude_length;
+    std::cout << "key_head : " << key_head << std::endl;
+
+    if ( strncmp( key_head, "help", 4 ) == 0) {
+      key_ = OptionKey::HELP;
+      option_ = "help";
+    } else {
+      throw std::invalid_argument( "invalid argument" );
+    }
+  } else {
+    key_ = OptionKey::DIRECTORY;
+    option_ = arg;
+  }
+}
+
+CmdOption::~CmdOption() {
+}
+
+class CmdLine {
+public:
+  CmdLine( int const, char const * [] );
+  ~CmdLine();
+
+  CmdOption getOption( int const index ) { return options_[index]; }
+  int argNum() { return argument_num_; }
+
+  bool isThereHelp() const noexcept;
+private:
+  std::vector<CmdOption> options_;
+  int argument_num_;
+};
+
+CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
+: argument_num_( 1 ) {
+  if ( arg_count != 1 ) {
+    try {
+      for ( int arg_index = 1; arg_index != arg_count; ++arg_index ) {
+        options_.emplace_back( arg_chars[arg_index] );
+      }
+    } catch ( ... ) {
+      throw;
+    }
+
+    argument_num_ += options_.size();
+  }
+}
+
+CmdLine::~CmdLine() {
+}
+
+bool CmdLine::isThereHelp() const noexcept {
+  for ( auto itr : options_ ) {
+    if ( itr.getKey() == OptionKey::HELP ) { return 1; }
+  }
+
+  return 0;
+}
 
 class Time : public UTIL::COMPARABLE::CompDef<Time> {
 public:
@@ -140,14 +247,21 @@ void makeCandidate( std::vector<std::string> & candidate_directories, Path const
   }
 }
 
-int main( int argc, char * argv [] ) {
+int main( int argc, char const * argv [] ) {
   std::vector<Path *> path_list;
 
   /* build paths list */
   try {
-    if ( argc == 1 ) {
+    CmdLine cmd_line( argc, argv );
+
+    if ( cmd_line.isThereHelp() == 1 ) {
+      Usage().display( std::cout );
+      return 0;
+    }
+
+    if ( cmd_line.argNum() == 1 ) {
       path_list.emplace_back( new Path( ".\\", PathTag::IMPLICIT ) );
-    } else if ( argc > 3 ) {
+    } else if ( cmd_line.argNum() > 3 ) {
       std::cout << "yet unimplemented" << std::endl;
       return 0;
     } else {
@@ -155,9 +269,19 @@ int main( int argc, char * argv [] ) {
         path_list.emplace_back( new Path( argv[arg_index], PathTag::ARG ) );
       }
     }
-  } catch ( ... ) {
-    std::cerr << "error was occured" << std::endl;
+  } catch ( std::invalid_argument const & e ) {
+    std::cerr << e.what() << std::endl;
+
+    Usage().display( std::cerr );
+
     for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
+
+    return -1;
+  } catch ( std::exception const & e ) {
+    std::cerr << "error was occured: " << e.what() << std::endl;
+
+    for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
+
     return -1;
   }
 
