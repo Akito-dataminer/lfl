@@ -262,11 +262,11 @@ int main( int argc, char const * argv [] ) {
 
     if ( cmd_line.argNum() == 1 ) {
       path_list.emplace_back( new Path( ".\\", PathTag::IMPLICIT ) );
-    } else if ( cmd_line.argNum() > 3 ) {
+    } else if ( cmd_line.argNum() > 2 ) {
       std::cout << "yet unimplemented" << std::endl;
       return 0;
     } else {
-      for ( int arg_index = 0; arg_index != argc; ++arg_index ) {
+      for ( int arg_index = 1; arg_index != argc; ++arg_index ) {
         path_list.emplace_back( new Path( argv[arg_index], PathTag::ARG ) );
       }
     }
@@ -291,7 +291,21 @@ int main( int argc, char const * argv [] ) {
   for ( auto itr : path_list ) {
     if ( isDirectory( itr->getPath() ) ) {
       makeCandidate( exist_directories, *itr );
+    } else {
+      std::cerr << itr->getPath() << ": is NOT exist" << std::endl;
     }
+  }
+
+  // 検査ディレクトリの数が0だったら、これ以上処理を進める必要は無い。
+  // コマンドライン引数でディレクトリが指定されているが、
+  // そのディレクトリがすべて見つからなかった場合、
+  // 検査ディレクトリの数が0になる可能性がある。
+  if ( exist_directories.size() == 0 ) {
+    std::cout << "There are not any paths to check." << std::endl;
+
+    // for ( auto itr : path_list ) { delete itr; }
+
+    return -2;
   }
 
   WIN32_FIND_DATA path_data;
