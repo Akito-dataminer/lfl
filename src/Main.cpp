@@ -97,6 +97,7 @@ private:
 
 Path::Path( std::string const & path, PathTag tag )
 : path_( path ), tag_( tag ), exist_( checkExist() ) {
+  // If the path is directory, add path-delimiter into back of argument.
   if ( ( path.back() != DELIMITER ) && isDirectory( path ) ) {
     path_ += DELIMITER;
   }
