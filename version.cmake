@@ -1,4 +1,4 @@
-set(PRODUCT_NAME "")
+set(PRODUCT_NAME "lfl")
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 0)
 set(BUILD_NUMBER 1)
