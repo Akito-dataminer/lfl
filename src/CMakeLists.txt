@@ -1,7 +1,7 @@
 file( GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp )
 
 # 生成するファイル名の指定
-set( OUTPUT out )
+set( OUTPUT lfl )
 
 # 実行ファイル生成のターゲットを生成する
 set( INCLUDE_DIRECTORY ${PROJECT_SOURCE_DIR}/include ) # インクルードディレクトリの設定
