@@ -8,7 +8,7 @@ set( TEST_MAIN TestMain.cpp )
 ##############################
 ## テストケースを追加するための関数
 ##############################
-function( create_executable TEST_NAME TEST_CASE_SOURCE CHILD_DIRECTORY )
+function( create_executable TEST_NAME TEST_SOURCE_PATH )
   find_package(Boost REQUIRED)
   include_directories(${Boost_INCLUDE_DIRS})
 
@@ -17,7 +17,7 @@ function( create_executable TEST_NAME TEST_CASE_SOURCE CHILD_DIRECTORY )
   list( REMOVE_ITEM SOURCES ${MAIN_PATH} )
 
   # ${TEST_NAME}に格納されているファイル名で実行ファイルを作成
-  add_executable( ${TEST_NAME} ${TEST_DIRECTORY}/${CHILD_DIRECTORY}/${TEST_CASE_SOURCE} ${SOURCES} ${TEST_DIRECTORY}/${TEST_MAIN} )
+  add_executable( ${TEST_NAME} ${TEST_SOURCE_PATH} ${SOURCES} ${TEST_DIRECTORY}/${TEST_MAIN} )
   target_include_directories( ${TEST_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include )
 
   # コンパイルフラグを追加
