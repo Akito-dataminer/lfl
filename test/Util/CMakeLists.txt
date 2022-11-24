@@ -4,7 +4,7 @@ include( ${TEST_DIRECTORY}/AddTestHelpers.cmake )
 
 ## テストケースの追加
 set( TEST_NAME1 test_comparable )
-set( SOURCE_PATH ${TEST_DIRECTORY}/Util/${test_comparable} )
+set( SOURCE_PATH Util/Comparable.cpp )
 create_executable( ${TEST_NAME1} ${SOURCE_PATH} )
 
 add_test(

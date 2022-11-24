@@ -17,7 +17,7 @@ function( create_executable TEST_NAME TEST_SOURCE_PATH )
   list( REMOVE_ITEM SOURCES ${MAIN_PATH} )
 
   # ${TEST_NAME}に格納されているファイル名で実行ファイルを作成
-  add_executable( ${TEST_NAME} ${TEST_SOURCE_PATH} ${SOURCES} ${TEST_DIRECTORY}/${TEST_MAIN} )
+  add_executable( ${TEST_NAME} ${TEST_DIRECTORY}/${TEST_SOURCE_PATH} ${SOURCES} ${TEST_DIRECTORY}/${TEST_MAIN} )
   target_include_directories( ${TEST_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include )
 
   # コンパイルフラグを追加
