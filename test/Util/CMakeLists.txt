@@ -3,10 +3,11 @@ set( TEST_DIRECTORY ${PROJECT_SOURCE_DIR}/test )
 include( ${TEST_DIRECTORY}/AddTestHelpers.cmake )
 
 ## テストケースの追加
-set( TEST_COMPARABLE test_comparable )
-create_executable( ${TEST_COMPARABLE} Comparable.cpp Util )
+set( TEST_NAME1 test_comparable )
+set( SOURCE_PATH ${TEST_DIRECTORY}/Util/${test_comparable} )
+create_executable( ${TEST_NAME1} ${SOURCE_PATH} )
 
 add_test(
-  NAME ${TEST_COMPARABLE}
-  COMMAND ${TEST_COMPARABLE}
+  NAME ${TEST_NAME1}
+  COMMAND ${TEST_NAME1}
   )
