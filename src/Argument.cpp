@@ -5,11 +5,12 @@
 
 namespace ARG {
 
+namespace OPTION {
 
-id_type Discriminate( string_type arg_option ) {
-  id_type option_id = OPTION_NUM;
+index_type List::Discriminate( string_type arg_option ) {
+  index_type option_id = option_num;
 
-  for ( id_type id_index = 0; id_index < OPTION_NUM; ++id_index ) {
+  for ( index_type id_index = 0; id_index < option_num; ++id_index ) {
     int option_length = std::strlen( option_list[id_index] ) - 1;
     int arg_length = std::strlen( arg_option ) - 1;
 
@@ -23,5 +24,10 @@ id_type Discriminate( string_type arg_option ) {
 
   return option_id;
 }
+
+length_type List::countLength() { return 0; }
+
+} // OPTION
+
 
 } // ARG
