@@ -7,98 +7,95 @@
 #include <string>
 #include <cstring>
 #include <utility>
+#include <type_traits>
 
-#ifndef OPTION_LIST
-#define OPTION_LIST { "directory", "help" }
-#endif
+namespace UTIL {
+  template<bool Cond> using if_nullp_c = std::enable_if_t<Cond, std::nullptr_t>;
+} // UTIL
 
 namespace ARG {
 
 using string_type = char const *;
 using list_type = string_type [];
 using index_type = std::size_t;
-using index_type_const = index_type const;
-using length_type = std::size_t;
+using size_type = std::size_t;
 
-static constexpr list_type defined_list = OPTION_LIST;
+template<typename T> constexpr bool false_v = false;
 
-template<typename> constexpr bool empty_list = false;
+// Array_pが配列型でなければエラーとする。
+// std::extent_vは、与えられた型が配列型でなければ0をvalueの値として定義するが、
+// この関数は配列型かどうかを調べるために使いたいわけではない。
+// だからここでは、配列型以外が与えられるとエラーを出すようにしている。
+template<typename Array_p, index_type INDEX = 0, UTIL::if_nullp_c<std::is_array_v<Array_p>>* = nullptr>
+consteval std::size_t ArraySize( Array_p const & p ) { return std::extent_v<Array_p, INDEX>; }
 
-template<class T = void>
-static consteval std::size_t ArraySize() {
-  if constexpr ( std::extent_v<decltype( defined_list )> != 0 ) {
-    return std::extent_v<decltype( defined_list ), 0>;
-  } else {
-    static_assert( empty_list<T>, "OPTION_LIST is empty");
-    return std::extent_v<decltype( defined_list ), 0>;
-  }
-}
+template<typename Array_p, index_type INDEX = 0, UTIL::if_nullp_c<!( std::is_array_v<Array_p> )>* = nullptr>
+consteval std::size_t ArraySize( Array_p const & p ) { static_assert( false_v<Array_p>, "given type is NOT a pointer to array type"); return 0; }
 
 namespace OPTION {
 
 namespace STRING {
 
-template<index_type> constexpr bool wrong_id = false;
-
-template<index_type ID>
-static consteval string_type HeadAddress() {
-  if constexpr ( ID < ArraySize() ) {
-    return defined_list[ID];
-  } else {
-    static_assert( wrong_id<ID> , "specified ID is grater than number of option"); return nullptr;
-  }
+consteval auto Length( char const * string ) {
+  index_type index = 0;
+  while ( string[index] != '\0' ) { ++index; }
+  return index;
 }
 
-template<index_type ID, index_type INDEX = 0, char C = HeadAddress<ID>()[INDEX]>
-struct Length {
-  static constexpr length_type value = Length<ID, INDEX + 1>::value;
-};
-
-template<index_type ID, index_type INDEX>
-struct Length<ID, INDEX, '\0'> {
-  static constexpr length_type value = INDEX;
-};
-
 } // STRING
-
-// template<index_type OPTION_NUM = ArraySize()>
-// class LengthList;
 
 class List;
 
 // オプションの長さを実装するクラス
-template<length_type OPTION_NUM = ArraySize()>
+// ただし、Tpは配列型でなければならないという制限を付けたい。
 struct LengthListImpl {
   friend class List;
 public:
-  decltype(STRING::Length<0>::value) length[OPTION_NUM];
+  size_type value[];
 
 private:
-  template<index_type... index_list>
-  constexpr LengthListImpl( std::index_sequence<index_list...> ) : length{ STRING::Length<index_list>::value ... } {}
+  template<typename T, index_type... index_list, UTIL::if_nullp_c<std::is_pointer_v<T>>* = nullptr>
+  consteval LengthListImpl( T const string_list, std::index_sequence<index_list...> ) : value{ STRING::Length(string_list[index_list]) ... } {}
+};
+
+struct StringImpl {
+  friend class List;
+public:
+  string_type value[];
+
+private:
+  template<typename T, index_type... index_list, UTIL::if_nullp_c<std::is_pointer_v<T>>* = nullptr>
+  consteval StringImpl( T const string_list, std::index_sequence<index_list...> ) : value{ string_list[index_list] ... } {}
 };
 
 class List {
 private:
-  // constexpr char const * option_specificator = { "--" };
+  size_type option_num_;
+  LengthListImpl length_list_;
+  // StringImpl option_string_list_;
 
-  static constexpr list_type option_list = OPTION_LIST;
-  static constexpr decltype( std::extent<decltype( option_list ), 0>::value ) option_num = ArraySize();
-  static constexpr LengthListImpl<> length = LengthListImpl<>( std::make_index_sequence<option_num>() ); // std::make_index_sequence<>はC++14から
-
-  length_type countLength();
 public:
-  List() = default;
-  ~List() = default;
-  List( List const & ) = delete;
-  List & operator=( List const & ) = delete;
-  List( List && ) = delete;
-  List & operator=( List && ) = delete;
+  template<typename Tp, std::size_t OPTION_NUM = std::extent_v<Tp>, UTIL::if_nullp_c<
+    std::is_array_v<Tp> && std::is_pointer_v<std::remove_extent_t<Tp>>
+  >* = nullptr>
+  consteval List( Tp const & option_list )
+  : option_num_( OPTION_NUM )
+  , length_list_( LengthListImpl( option_list, std::make_index_sequence<OPTION_NUM>() ) ) {} // std::make_index_sequence<>はC++14から
+  // , option_list_( OptionStringImpl( option_list, std::make_index_sequence<OPTION_NUM>() ) ) {}
 
-  index_type Discriminate( string_type arg_option );
-  index_type getNum() const noexcept { return option_num; }
+  // ~List() = default;
+  // List( List const & ) = delete;
+  // List & operator=( List const & ) = delete;
+  // List( List && ) = delete;
+  // List & operator=( List && ) = delete;
 
-  decltype( option_num ) getString( index_type );
+  constexpr auto num() const noexcept { return option_num_; }
+  constexpr auto getLength( index_type const index ) const noexcept { return length_list_.value[index]; }
+
+  // index_type Discriminate( string_type arg_option );
+  // index_type getNum() const noexcept { return option_num_; }
+
+  // decltype( option_num_ ) getString( index_type );
 };
 
 } // OPTION
