@@ -36,7 +36,7 @@ namespace OPTION {
 
 namespace STRING {
 
-consteval auto Length( char const * string ) {
+consteval auto Length( char const * const string ) {
   index_type index = 0;
   while ( string[index] != '\0' ) { ++index; }
   return index;
