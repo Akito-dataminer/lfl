@@ -65,7 +65,8 @@ struct StringLiteral {
 
   CharT str_chars_[N];
 
-  constexpr std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
+  consteval decltype( N ) size() const noexcept { return N; }
+  consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)

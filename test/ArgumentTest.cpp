@@ -54,10 +54,8 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
   using namespace ARG::OPTION::STRING;
 
   STATIC_CONSTEXPR StringLiteral literal1( "directory" );
-  // StringLiteral::str_chars_[N]がstatic constexpr指定されていないので、
-  // 次のコードはエラーとなる。
-  //
-  // static_assert( IsSame<literal1>( "directory" ) == true );
+
+  static_assert( IsSame<literal1>( "directory" ) == true );
 
   char const * arg_option = "directory";
 
