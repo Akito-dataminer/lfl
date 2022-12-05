@@ -65,18 +65,6 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
   BOOST_CHECK( is_same == true );
 }
 
-BOOST_AUTO_TEST_CASE( constexpr_func_IsMatch ) {
-  using namespace ARG::OPTION;
-
-  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
-
-  char const * arg_str = "directory";
-
-  std::size_t index = IsMatch<0, 1, literal1>( arg_str );
-
-  BOOST_CHECK( index == 0 );
-}
-
 BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
   using namespace ARG::OPTION;
 

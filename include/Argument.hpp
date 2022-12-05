@@ -85,14 +85,6 @@ constexpr bool IsSame( char_cptr const str ) {
 
 } // STRING
 
-// StringLiteralとマッチしていたら、そのインデックスを返して、
-// マッチしていなければ、与えられたオプションの数を返す。
-// 複数のStringLiteralとインデックスを結び付けるための関数(と言えるかもしれない)。
-template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL>
-inline constexpr index_type IsMatch( char_cptr arg_str ) {
-  return ( STRING::IsSame<LITERAL>( arg_str ) == true ) ? INDEX : OPTION_NUM;
-}
-
 // テンプレート引数に与えられたStringLiteralの集合から、
 // マッチするものがあれば、そのインデックスを返して、
 // マッチするものが無ければfalseを返す(std::pairとして)。
