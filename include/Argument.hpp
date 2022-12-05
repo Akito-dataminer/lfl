@@ -59,7 +59,7 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
 // というよりも、コンパイル時に要素数も分かるから必要ない。
 template<typename CharT, size_type N>
 struct StringLiteral {
-  consteval StringLiteral( CharT const ( & string_literal )[N + 1] ) {
+  explicit consteval StringLiteral( CharT const ( & string_literal )[N + 1] ) {
     std::copy_n( string_literal, N, str_chars_ );
   }
 
