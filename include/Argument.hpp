@@ -77,7 +77,7 @@ StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
 // ただし、クラスをテンプレート引数に指定できるためには、
 // テンプレート引数に指定されているクラスがいくつかの条件を充たしている必要がある。
 template<StringLiteral LITERAL>
-constexpr bool IsSame( char_cptr str ) {
+constexpr bool IsSame( char_cptr const str ) {
   auto [ ptr, length ] = LITERAL.get();
 
   return ( IsSameN( ptr, str, length ) == true ) ? true : false;
