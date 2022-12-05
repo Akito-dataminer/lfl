@@ -76,56 +76,86 @@ StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
 // クラス型をテンプレート引数に指定できるようになるのはC++20以降
 // ただし、クラスをテンプレート引数に指定できるためには、
 // テンプレート引数に指定されているクラスがいくつかの条件を充たしている必要がある。
-template<StringLiteral literal>
-constexpr bool IsSame( char_cptr arg_option ) {
-  auto [ ptr, length ] = literal.get();
+template<StringLiteral LITERAL>
+constexpr bool IsSame( char_cptr str ) {
+  auto [ ptr, length ] = LITERAL.get();
 
-  if ( IsSameN( ptr, arg_option, length ) == true ) { return true; }
-
-  return false;
+  return ( IsSameN( ptr, str, length ) == true ) ? true : false;
 }
 
 } // STRING
 
-// class List;
-template<size_type OPTION_NUM>
-struct OptionString;
+// StringLiteralとマッチしていたら、そのインデックスを返して、
+// マッチしていなければ、与えられたオプションの数を返す。
+// 複数のStringLiteralとインデックスを結び付けるための関数(と言えるかもしれない)。
+template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL>
+inline constexpr index_type IsMatch( char_cptr arg_str ) {
+  return ( STRING::IsSame<LITERAL>( arg_str ) == true ) ? INDEX : OPTION_NUM;
+}
 
-// オプションの長さを実装するクラス
-// ただし、Tpは配列型でなければならないという制限を付けたい。
-template<size_type OPTION_NUM>
-struct OptionStrImpl {
-  friend struct OptionString<OPTION_NUM>;
-public:
-  char_cptr values_[OPTION_NUM];
+// テンプレート引数に与えられたStringLiteralの集合から、
+// マッチするものがあれば、そのインデックスを返して、
+// マッチするものが無ければfalseを返す。
+template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral ... LITERAL_TAIL>
+constexpr index_type DiscriminantImpl( char_cptr arg_str ) {
+  if ( STRING::IsSame<LITERAL_HEAD>( arg_str ) == true ) {
+    return STRING::IsSame<LITERAL_HEAD>( arg_str );
+  } else {
+    return DiscriminantImpl<LITERAL_TAIL ...>( arg_str );
+  }
+}
 
+template<STRING::StringLiteral ... LITERALS>
+constexpr auto Discriminant( char_cptr arg_str ) {
+  index_type rt = DiscriminantImpl<0, LITERALS ...>( arg_str );
+
+  return rt;
+}
+
+// template<size_type OPTION_INDEX, typename ... T>
+// struct Literals;
+
+// template<size_type OPTION_INDEX>
+// struct Literals<OPTION_INDEX> {};
+
+// template<size_type OPTION_INDEX, typename HeadT, typename ... TailT>
+// struct Literals<OPTION_INDEX, HeadT, TailT ...> : public Literals<OPTION_INDEX + 1, TailT ...> {
+//   HeadT value;
+// };
+
+// template<typename ... List>
+// struct LiteralSet : public Literals<0, List ...> {};
+
+// template<size_type OPTION_NUM>
+// template<size_type OPTION_NUM, STRING::StringLiteral ... Literals>
+// struct OptionString;
+
+// template<size_type OPTION_NUM>
+// struct OptionStrImpl {
+//   friend struct OptionString<OPTION_NUM>;
+// public:
+//   std::tuple<> values_;
+
+// private:
+//   template<STRING::StringLiteral ... literals>
+//   consteval OptionStrImpl( T const string_ptr, std::index_sequence<index_list...> ) : values_{ string_ptr[index_list] ... } {}
+// };
+
+// template<size_type OPTION_NUM, STRING::StringLiteral ... Literals>
+// struct OptionString : public OptionStrImpl<OPTION_NUM> {
+//   consteval OptionString( auto const option_strs[OPTION_NUM] ) : OptionStrImpl<OPTION_NUM>( option_strs, std::make_index_sequence<OPTION_NUM>() ) {};
+// };
+
+class OptionSet {
 private:
-  template<typename T, index_type... index_list, UTIL::if_nullp_c<
-    std::is_pointer_v<std::remove_extent_t<T>>
-  >* = nullptr>
-  consteval OptionStrImpl( T const string_ptr, std::index_sequence<index_list...> ) : values_{ string_ptr[index_list] ... } {}
-};
-
-template<size_type OPTION_NUM>
-struct OptionString : public OptionStrImpl<OPTION_NUM> {
-  consteval OptionString( auto const option_strs[OPTION_NUM] ) : OptionStrImpl<OPTION_NUM>( option_strs, std::make_index_sequence<OPTION_NUM>() ) {};
-};
-
-template<typename T, size_type OPTION_NUM>
-class List {
-  using value_type = T;
-  using ptr = T*;
-  using const_value_type = T const;
-  using const_ptr = const_value_type *;
-private:
-  constexpr static size_type option_num_ = OPTION_NUM;
-  const_ptr head_;
+  // constexpr static size_type option_num_ = sizeof...( literals );
+  // std::tuple<> strs_;
   // OptionString<OPTION_NUM> head_ptrs_;
 
 public:
-  consteval List( T const ( & option_list )[OPTION_NUM] ) : head_( option_list ) {}
-  // : heads_( option_list ) {}
-  // , head_ptrs_( OptionString<OPTION_NUM>( option_list ) ) {}
+  // template<typename CharT = char const, STRING::StringLiteral<CharT> ... literals>
+  // consteval OptionSet() : strs_( std::make_index_sequence<sizeof...( literals )>(), literals... ) {}
+  // consteval OptionSet() : strs_( std::make_tuple( literals ... ) ) {}
 
   // ~List() = default;
   // List( List const & ) = default;
@@ -133,10 +163,10 @@ public:
   // List( List && ) = default;
   // List & operator=( List && ) = default;
 
-  consteval auto num() const noexcept { return option_num_; }
+  // consteval auto num() const noexcept { return option_num_; }
   // consteval auto strHead( index_type const index ) const noexcept { return head_ptrs_.values_[index]; }
 
-  // [[nodiscard]] consteval index_type discriminant( string_type const arg_option ) const {
+  // consteval index_type discriminant( string_type const arg_option ) const {
   //   for ( size_t index = 0; index < option_num_; ++index ) {
   //     auto length = STRING::Length( arg_option );
   //     auto value = head_ptrs_.values_[index];
@@ -148,6 +178,9 @@ public:
   //   return option_num_;
   // }
 };
+
+// template<typename CharT = char const[], STRING::StringLiteral<CharT> ... literals>
+// class OptionSet() -> class OptionSet<char const[], literals...>;
 
 // template<typename T, size_type N>
 // consteval index_type discriminant( List<T, N> list, char_cptr const arg_option ) {

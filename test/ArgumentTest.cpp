@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <utility>
 
 #define OPTION_LIST { "directory", "help", "version" }
 
@@ -59,36 +60,36 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
 
   char const * arg_option = "directory";
 
-  const bool is_same = IsSame<literal1>( arg_option );
+  bool const is_same = IsSame<literal1>( arg_option );
 
   BOOST_CHECK( is_same == true );
 }
 
+BOOST_AUTO_TEST_CASE( constexpr_func_IsMatch ) {
+  using namespace ARG::OPTION;
+
+  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
+
+  char const * arg_str = "directory";
+
+  std::size_t index = IsMatch<0, 1, literal1>( arg_str );
+
+  BOOST_CHECK( index == 0 );
+}
+
 BOOST_AUTO_TEST_CASE( test_argument_classes ) {
-  // constexpr char const * option_list[] = OPTION_LIST;
-  // constexpr char const * arg_option = "directory";
-  // STATIC_CONSTEXPR ARG::OPTION::StringLiteral literals[] = { "directory", "help" };
-  // STATIC_CONSTEXPR ARG::OPTION::List options( option_list );
-  // STATIC_CONSTEXPR ARG::OPTION::List option_one_arg( "directory" );
+  using namespace ARG::OPTION;
+  using namespace ARG::OPTION::STRING;
 
-  // static_assert( options.num() == 3 );
+  STATIC_CONSTEXPR StringLiteral literal1( "directory" );
+  STATIC_CONSTEXPR StringLiteral literal2( "help" );
 
-  // constexpr auto disc = ARG::OPTION::discriminant( options, "directory" );
-  // constexpr auto disc2 = options.discriminant( "directory" );
-  // static_assert( options.discriminant( "directory" ), "");
-  // static_assert( disc != 0, "");
+  // std::tuple options( literal1, literal2 );
 
-  // constexpr ARG::OPTION::List options_literal( { "directory", "help" } );
-  // static_assert( options_literal.num() == 2 );
-  // constexpr auto option_id = options.discriminate( option_list[0] );
-  // std::cout << "option_id: " << option_id << std::endl;
-
-  // BOOST_CHECK( options.num() == 3 );
-
-  // BOOST_CHECK( options.discriminant( "directory" ) );
-
-  // BOOST_CHECK( option_id == 0 );
-  // BOOST_CHECK( std::strncmp( options.Discriminate(ARG::OPTION::option_list), option_list[0], 9 ) == 0 );
+  // auto options = std::make_tuple( StringLiteral( "directory" ), StringLiteral( "help" ) );
+  // OptionSet literal_set< StringLiteral( "directory" ), StringLiteral( "help" ) >();
+  // LiteralSet literals( StringLiteral( "directory" ), StringLiteral( "help" ) );
+  // SetImpl options( literal1, literal2 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
