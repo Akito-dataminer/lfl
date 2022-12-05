@@ -77,6 +77,28 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsMatch ) {
   BOOST_CHECK( index == 0 );
 }
 
+BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
+  using namespace ARG::OPTION;
+
+  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
+  STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
+
+  char const * arg_dir = "directory";
+
+  auto [ is_match_dir, index_dir ] = LiteralIndex<literal1, literal2>( arg_dir );
+
+  BOOST_CHECK( is_match_dir == true );
+  BOOST_CHECK( index_dir == 0 );
+  BOOST_CHECK( index_dir != 1 );
+
+  char const * arg_help = "help";
+  auto [ is_match_help, index_help ] = LiteralIndex<literal1, literal2>( arg_help );
+
+  BOOST_CHECK( is_match_help == true );
+  BOOST_CHECK( index_help != 0 );
+  BOOST_CHECK( index_help == 1 );
+}
+
 BOOST_AUTO_TEST_CASE( test_argument_classes ) {
   using namespace ARG::OPTION;
   using namespace ARG::OPTION::STRING;

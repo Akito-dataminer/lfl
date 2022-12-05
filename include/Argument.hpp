@@ -95,21 +95,25 @@ inline constexpr index_type IsMatch( char_cptr arg_str ) {
 
 // テンプレート引数に与えられたStringLiteralの集合から、
 // マッチするものがあれば、そのインデックスを返して、
-// マッチするものが無ければfalseを返す。
-template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral ... LITERAL_TAIL>
-constexpr index_type DiscriminantImpl( char_cptr arg_str ) {
-  if ( STRING::IsSame<LITERAL_HEAD>( arg_str ) == true ) {
-    return STRING::IsSame<LITERAL_HEAD>( arg_str );
-  } else {
-    return DiscriminantImpl<LITERAL_TAIL ...>( arg_str );
-  }
+// マッチするものが無ければfalseを返す(std::pairとして)。
+//
+// 多重定義の解決時に一致度が同じとなるような関数を複数定義したことになってしまう。
+// そのため、StringLiteralの指定が一つだけのときの多重定義の一致度のランクを高める必要がある。
+// StringLiteralが一つだけのときの一致度を高めるための手段として、
+// テンプレート引数の最後(nullptrの部分)で一致度が高くなるようにしている。
+template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL, UTIL::if_nullp_c< INDEX == ( OPTION_NUM - 1 ) >* = nullptr>
+inline constexpr std::pair<bool, index_type> LiteralIndexImpl( char_cptr const arg_str ) {
+  return ( STRING::IsSame<LITERAL>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : std::pair<bool, index_type>{ false, OPTION_NUM };
 }
 
-template<STRING::StringLiteral ... LITERALS>
-constexpr auto Discriminant( char_cptr arg_str ) {
-  index_type rt = DiscriminantImpl<0, LITERALS ...>( arg_str );
+template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+inline constexpr std::pair<bool, index_type> LiteralIndexImpl( auto const arg_str ) {
+  return ( STRING::IsSame<LITERAL_HEAD>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : LiteralIndexImpl<INDEX + 1, OPTION_NUM, LITERAL_TAIL...>( arg_str );
+}
 
-  return rt;
+template<STRING::StringLiteral... LITERALS>
+constexpr auto LiteralIndex( char_cptr const arg_str ) {
+  return LiteralIndexImpl<0, sizeof...( LITERALS ), LITERALS...>( arg_str );
 }
 
 // template<size_type OPTION_INDEX, typename ... T>
