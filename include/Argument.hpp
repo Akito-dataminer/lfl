@@ -90,7 +90,7 @@ constexpr bool IsSame( char_cptr const str ) {
 // マッチするものが無ければfalseを返す(std::pairとして)。
 //
 // 多重定義の解決時に一致度が同じとなるような関数を複数定義したことになってしまう。
-// そのため、StringLiteralの指定が一つだけのときの多重定義の一致度のランクを高める必要がある。
+// そのため、StringLiteralの指定が一つだけのときの多重定義の一致度を高める必要がある。
 // StringLiteralが一つだけのときの一致度を高めるための手段として、
 // テンプレート引数の最後(nullptrの部分)で一致度が高くなるようにしている。
 template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL, UTIL::if_nullp_c< INDEX == ( OPTION_NUM - 1 ) >* = nullptr>

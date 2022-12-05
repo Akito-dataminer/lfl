@@ -77,14 +77,18 @@ BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
 
   BOOST_CHECK( is_match_dir == true );
   BOOST_CHECK( index_dir == 0 );
-  BOOST_CHECK( index_dir != 1 );
 
   char const * arg_help = "help";
   auto [ is_match_help, index_help ] = LiteralIndex<literal1, literal2>( arg_help );
 
   BOOST_CHECK( is_match_help == true );
-  BOOST_CHECK( index_help != 0 );
   BOOST_CHECK( index_help == 1 );
+
+  char const * arg_typo = "hop";
+  auto [ non_match, index_non ] = LiteralIndex<literal1, literal2>( arg_typo );
+
+  BOOST_CHECK( non_match == false );
+  BOOST_CHECK( index_non == 2 );
 }
 
 BOOST_AUTO_TEST_CASE( test_argument_classes ) {
