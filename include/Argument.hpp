@@ -108,39 +108,28 @@ constexpr auto LiteralIndex( char_cptr const arg_str ) {
   return LiteralIndexImpl<0, sizeof...( LITERALS ), LITERALS...>( arg_str );
 }
 
-// template<size_type OPTION_INDEX, typename ... T>
-// struct Literals;
+// テンプレート引数に与えられた文字列リテラルを、
+// タプルのように保存するためのテンプレートクラス
+template<index_type INDEX, STRING::StringLiteral... LITERAL_TAIL>
+struct OptionsImpl;
 
-// template<size_type OPTION_INDEX>
-// struct Literals<OPTION_INDEX> {};
+template<index_type INDEX>
+struct OptionsImpl<INDEX> {};
 
-// template<size_type OPTION_INDEX, typename HeadT, typename ... TailT>
-// struct Literals<OPTION_INDEX, HeadT, TailT ...> : public Literals<OPTION_INDEX + 1, TailT ...> {
-//   HeadT value;
-// };
+template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<INDEX + 1, LITERAL_TAIL...> {
+  consteval decltype( LITERAL_HEAD ) const & literal() const noexcept { return LITERAL_HEAD; }
+};
 
-// template<typename ... List>
-// struct LiteralSet : public Literals<0, List ...> {};
+template<STRING::StringLiteral ... LITERALS>
+struct Options : public OptionsImpl<0, LITERALS...> {};
 
-// template<size_type OPTION_NUM>
-// template<size_type OPTION_NUM, STRING::StringLiteral ... Literals>
-// struct OptionString;
+// 上記テンプレートクラスから文字列をコンパイル時に受け取るための即時関数
+template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> const & option ) { return option.literal(); }
 
-// template<size_type OPTION_NUM>
-// struct OptionStrImpl {
-//   friend struct OptionString<OPTION_NUM>;
-// public:
-//   std::tuple<> values_;
-
-// private:
-//   template<STRING::StringLiteral ... literals>
-//   consteval OptionStrImpl( T const string_ptr, std::index_sequence<index_list...> ) : values_{ string_ptr[index_list] ... } {}
-// };
-
-// template<size_type OPTION_NUM, STRING::StringLiteral ... Literals>
-// struct OptionString : public OptionStrImpl<OPTION_NUM> {
-//   consteval OptionString( auto const option_strs[OPTION_NUM] ) : OptionStrImpl<OPTION_NUM>( option_strs, std::make_index_sequence<OPTION_NUM>() ) {};
-// };
+template<index_type INDEX, STRING::StringLiteral... STRING_LITERALS>
+inline consteval auto GetOptionStr( Options<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
 
 class OptionSet {
 private:

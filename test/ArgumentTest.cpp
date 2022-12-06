@@ -91,12 +91,24 @@ BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
   BOOST_CHECK( index_non == 2 );
 }
 
+BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
+  using namespace ARG::OPTION;
+
+  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
+  STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
+
+  STATIC_CONSTEXPR Options<literal1, literal2> option;
+  STATIC_CONSTEXPR auto literal( GetOptionStr<0>( option ) );
+
+  static_assert( STRING::IsSame<literal>( "directory" ) == true );
+}
+
 BOOST_AUTO_TEST_CASE( test_argument_classes ) {
   using namespace ARG::OPTION;
   using namespace ARG::OPTION::STRING;
 
-  STATIC_CONSTEXPR StringLiteral literal1( "directory" );
-  STATIC_CONSTEXPR StringLiteral literal2( "help" );
+  // STATIC_CONSTEXPR StringLiteral literal1( "directory" );
+  // STATIC_CONSTEXPR StringLiteral literal2( "help" );
 
   // std::tuple options( literal1, literal2 );
 
