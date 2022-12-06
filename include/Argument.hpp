@@ -63,6 +63,11 @@ struct StringLiteral {
     std::copy_n( string_literal, N, str_chars_ );
   }
 
+  StringLiteral<CharT, N> ( StringLiteral<CharT, N>  const & ) = default;
+  StringLiteral<CharT, N> & operator=( StringLiteral<CharT, N>  const & ) = default;
+  StringLiteral<CharT, N> ( StringLiteral<CharT, N> && ) = default;
+  StringLiteral<CharT, N> & operator=( StringLiteral<CharT, N> && ) = default;
+
   CharT str_chars_[N];
 
   consteval decltype( N ) size() const noexcept { return N; }
