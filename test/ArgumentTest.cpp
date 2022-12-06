@@ -65,6 +65,15 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
   BOOST_CHECK( is_same == true );
 }
 
+BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
+  using namespace ARG::OPTION::STRING;
+
+  STATIC_CONSTEXPR char const * str1 = "directory";
+  STATIC_CONSTEXPR StringLiteral<char const *, Length(str1)> literal1( str1 );
+
+  BOOST_CHECK( IsSame<literal1>( str1 ) == true );
+}
+
 BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
   using namespace ARG::OPTION;
 
@@ -106,6 +115,8 @@ BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
 BOOST_AUTO_TEST_CASE( test_argument_classes ) {
   using namespace ARG::OPTION;
   using namespace ARG::OPTION::STRING;
+
+  // OptionSet<"directory">;
 
   // STATIC_CONSTEXPR StringLiteral literal1( "directory" );
   // STATIC_CONSTEXPR StringLiteral literal2( "help" );

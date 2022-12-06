@@ -74,9 +74,25 @@ struct StringLiteral {
   consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
 };
 
+// ポインタ対応のための特殊化
+template<typename CharT, size_type N>
+struct StringLiteral<CharT const *, N> {
+  explicit consteval StringLiteral( CharT const * string_literal_p ) {
+    std::copy_n( string_literal_p, N, str_chars_ );
+  }
+
+  CharT str_chars_[N];
+
+  consteval decltype( N ) size() const noexcept { return N; }
+  consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
+};
+
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>
 StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
+
+// template<typename CharTp, UTIL::if_nullp_c<std::is_pointer_v<CharTp>>* = nullptr>
+// StringLiteral( CharTp literal ) -> StringLiteral<CharTp, Length( literal )>;
 
 // クラス型をテンプレート引数に指定できるようになるのはC++20以降
 // ただし、クラスをテンプレート引数に指定できるためには、
