@@ -140,50 +140,80 @@ struct OptionsImpl<INDEX> {};
 template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
 struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<INDEX + 1, LITERAL_TAIL...> {
   consteval decltype( LITERAL_HEAD ) const & literal() const noexcept { return LITERAL_HEAD; }
+
+  constexpr auto isMatch( char const * str ) {
+    if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
+      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
+        ? LITERAL_HEAD.get()
+        : decltype( LITERAL_HEAD.get() ) { nullptr, 0 };
+    } else {
+      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
+        ? LITERAL_HEAD.get()
+        : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
+    }
+  }
 };
 
 template<STRING::StringLiteral ... LITERALS>
-struct Options : public OptionsImpl<0, LITERALS...> {};
+struct OptionList : public OptionsImpl<0, LITERALS...> {
+  template<std::make_index_sequence<sizeof...( LITERALS )>()>
+  constexpr auto discriminant( char const * str ) { return OptionsImpl<0, LITERALS...>::isMatch( str ); }
+};
 
 // 上記テンプレートクラスから文字列をコンパイル時に受け取るための即時関数
 template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
 inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> const & option ) { return option.literal(); }
 
 template<index_type INDEX, STRING::StringLiteral... STRING_LITERALS>
-inline consteval auto GetOptionStr( Options<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
+inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
 
-class OptionSet {
-private:
-  // constexpr static size_type option_num_ = sizeof...( literals );
-  // std::tuple<> strs_;
-  // OptionString<OPTION_NUM> head_ptrs_;
+// template<typename CharTp>
+// struct MakeOptionListImpl {
+//   OptionList<> literals_;
 
-public:
-  // template<typename CharT = char const, STRING::StringLiteral<CharT> ... literals>
-  // consteval OptionSet() : strs_( std::make_index_sequence<sizeof...( literals )>(), literals... ) {}
-  // consteval OptionSet() : strs_( std::make_tuple( literals ... ) ) {}
+//   template<index_type... indices>
+//   MakeOptionListImpl( CharTp const literal_ptrs, std::index_sequence<indices...> )
+//   : literals_( STRING::StringLiteral<char const *, STRING::Length( literal_ptrs[indices] )>()... ) {}
+// };
 
-  // ~List() = default;
-  // List( List const & ) = default;
-  // List & operator=( List const & ) = default;
-  // List( List && ) = default;
-  // List & operator=( List && ) = default;
+// template<typename CharTp>
+// struct OptionsList : public MakeOptionListImpl<CharTp> {
+//   template<typename T, size_type NUM>
+//   explicit consteval OptionsList( T const literal_ptrs ) : MakeOptionListImpl<CharTp>( literal_ptrs, std::make_index_sequence<NUM>() ) {}
+// };
 
-  // consteval auto num() const noexcept { return option_num_; }
-  // consteval auto strHead( index_type const index ) const noexcept { return head_ptrs_.values_[index]; }
+// 複数のStringLiteralを扱うためのクラス
+//
+// char const * option_strs[] = { "directory", "help" }
+// OptionList<option_strs> option_list;
+// auto [ is_match, index ] = option_list.discriminant();
+//
+// のようなことをしたい
+// template<typename Tp, size_type OPTION_NUM, UTIL::if_nullp_c<std::is_pointer_v<Tp>>* = nullptr>
+// struct MakeOptionList {
+//   explicit consteval MakeOptionList( Tp const ( & literal_array )[OPTION_NUM] ) : options_( literal_array, OPTION_NUM ) {}
 
-  // consteval index_type discriminant( string_type const arg_option ) const {
-  //   for ( size_t index = 0; index < option_num_; ++index ) {
-  //     auto length = STRING::Length( arg_option );
-  //     auto value = head_ptrs_.values_[index];
-  //     // auto ptr = arg_option;
-  //     // STRING::IsSameN( arg_option, heads_ptr_.values_[index], length );
-  //     // if ( STRING::IsSameN( arg_option, heads_ptr_.values_[index], STRING::Length( heads_ptr_.values_[index] ) ) ) { return index; }
-  //   }
+//   OptionsList<Tp> options_;
 
-  //   return option_num_;
-  // }
-};
+//   index_type discriminant() {}
+// };
+
+// 現状では、テンプレートパラメータとして与えられていないstringsを
+// テンプレートパラメータに使おうとしているので、
+// これをインスタンス化したら、その瞬間にエラーになる。
+// template<typename Tp, index_type... INDICES>
+// inline consteval auto MakeOptionListImpl( Tp const strings, std::index_sequence<INDICES...> ) {
+//   using namespace STRING;
+//   return OptionList<StringLiteral<std::remove_pointer<Tp> const *, Length( strings[INDICES] )>( strings[INDICES] ) ...>();
+// }
+
+// template<typename Tp, size_type OPTION_NUM, UTIL::if_nullp_c<std::is_pointer_v<Tp>>* = nullptr>
+// inline consteval auto MakeOptionList( Tp const ( & literal_array )[OPTION_NUM] ) {
+//   return MakeOptionListImpl( literal_array, std::make_index_sequence<OPTION_NUM>() );
+// }
+
+// template<typename CharT, size_type N>
+// StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
 
 // template<typename CharT = char const[], STRING::StringLiteral<CharT> ... literals>
 // class OptionSet() -> class OptionSet<char const[], literals...>;

@@ -106,27 +106,37 @@ BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
   STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
   STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
 
-  STATIC_CONSTEXPR Options<literal1, literal2> option;
-  STATIC_CONSTEXPR auto literal( GetOptionStr<0>( option ) );
+  STATIC_CONSTEXPR OptionList<literal1, literal2> option;
+  STATIC_CONSTEXPR auto literal( GetLiteral<0>( option ) );
 
   static_assert( STRING::IsSame<literal>( "directory" ) == true );
 }
 
-BOOST_AUTO_TEST_CASE( test_argument_classes ) {
+BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
   using namespace ARG::OPTION;
   using namespace ARG::OPTION::STRING;
 
-  // OptionSet<"directory">;
+  OptionList<STRING::StringLiteral( "directory" ), STRING::StringLiteral( "help" )> options;
 
-  // STATIC_CONSTEXPR StringLiteral literal1( "directory" );
-  // STATIC_CONSTEXPR StringLiteral literal2( "help" );
+  char const * arg_dir = "directory";
+  auto [ head_ptr_dir, length_dir ] = options.isMatch( arg_dir );
 
-  // std::tuple options( literal1, literal2 );
+  BOOST_TEST( length_dir == 9 );
+  BOOST_TEST( head_ptr_dir != nullptr );
+  BOOST_TEST( *head_ptr_dir == 'd' );
 
-  // auto options = std::make_tuple( StringLiteral( "directory" ), StringLiteral( "help" ) );
-  // OptionSet literal_set< StringLiteral( "directory" ), StringLiteral( "help" ) >();
-  // LiteralSet literals( StringLiteral( "directory" ), StringLiteral( "help" ) );
-  // SetImpl options( literal1, literal2 );
+  char const * arg_help = "help";
+  auto [ head_ptr_help, length_help ] = options.isMatch( arg_help );
+
+  BOOST_TEST( length_help == 4 );
+  BOOST_TEST( head_ptr_help != nullptr );
+  BOOST_TEST( *head_ptr_help == 'h' );
+
+  char const * arg_typo = "hop";
+  auto [ head_ptr_typo, length_typo ] = options.isMatch( arg_typo );
+
+  BOOST_TEST( length_typo == 0 );
+  BOOST_TEST( head_ptr_typo == nullptr );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
