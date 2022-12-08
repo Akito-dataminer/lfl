@@ -167,6 +167,12 @@ inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<
 template<index_type INDEX, STRING::StringLiteral... STRING_LITERALS>
 inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
 
+// ポインタ型からStringLiteral型に変換する。
+template<typename CharT, CharT const * ptr, size_type length = STRING::Length( ptr )>
+consteval auto ToStringLiteral () {
+  return STRING::StringLiteral<CharT const *, length>( ptr );
+}
+
 // template<typename CharTp>
 // struct MakeOptionListImpl {
 //   OptionList<> literals_;

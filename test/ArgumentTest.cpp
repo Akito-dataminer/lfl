@@ -139,4 +139,13 @@ BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
   BOOST_TEST( head_ptr_typo == nullptr );
 }
 
+BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
+  using namespace ARG::OPTION;
+
+  STATIC_CONSTEXPR char const option1[] = "directory";
+  constexpr auto literal1 = ToStringLiteral<char, option1>();
+
+  static_assert( literal1.size() == 9 );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
