@@ -71,7 +71,11 @@ BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
   STATIC_CONSTEXPR char const * str1 = "directory";
   STATIC_CONSTEXPR StringLiteral<char const *, Length(str1)> literal1( str1 );
 
+  STATIC_CONSTEXPR char const * options[] = { "directory", "help" };
+  constexpr StringLiteral<char const *, Length(options[0])> literal2( options[0] );
+
   BOOST_CHECK( IsSame<literal1>( str1 ) == true );
+  BOOST_CHECK( IsSame<literal2>( options[0] ) == true );
 }
 
 BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
