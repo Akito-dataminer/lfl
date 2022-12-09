@@ -144,12 +144,22 @@ struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<IN
   constexpr auto isMatch( char const * str ) {
     if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? LITERAL_HEAD.get()
-        : decltype( LITERAL_HEAD.get() ) { nullptr, 0 };
+        ? LITERAL_HEAD.get() : decltype( LITERAL_HEAD.get() ) { nullptr, 0 };
     } else {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? LITERAL_HEAD.get()
-        : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
+        ? LITERAL_HEAD.get() : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
+    }
+  }
+
+  constexpr auto matchIndex( char const * str ) {
+    if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
+      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
+        ? std::pair<bool, index_type>{ true, INDEX }
+        : std::pair<bool, index_type>{ false, INDEX + 1 };
+    } else {
+      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
+        ? std::pair<bool, index_type>{ true, INDEX }
+        : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::matchIndex( str );
     }
   }
 };
