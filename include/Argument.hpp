@@ -168,9 +168,9 @@ template<index_type INDEX, STRING::StringLiteral... STRING_LITERALS>
 inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
 
 // ポインタ型からStringLiteral型に変換する。
-template<typename CharT, CharT const * ptr, size_type length = STRING::Length( ptr )>
+template<typename CharT, CharT const * Ptr, size_type length = STRING::Length( Ptr )>
 consteval auto ToStringLiteral () {
-  return STRING::StringLiteral<CharT const *, length>( ptr );
+  return STRING::StringLiteral<CharT const *, length>( Ptr );
 }
 
 // template<typename CharTp>
