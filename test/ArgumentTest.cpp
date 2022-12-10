@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
 BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
   using namespace jig::OPTION::STRING;
 
-  STATIC_CONSTEXPR StringLiteral literal1( "directory" );
+  STATIC_CONSTEXPR Literal literal1( "directory" );
 
   static_assert( IsSame<literal1>( "directory" ) == true );
 
@@ -69,10 +69,10 @@ BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
   using namespace jig::OPTION::STRING;
 
   STATIC_CONSTEXPR char const * str1 = "directory";
-  STATIC_CONSTEXPR StringLiteral<char const *, Length(str1)> literal1( str1 );
+  STATIC_CONSTEXPR Literal<char const *, Length(str1)> literal1( str1 );
 
   STATIC_CONSTEXPR char const * options[] = { "directory", "help" };
-  constexpr StringLiteral<char const *, Length(options[0])> literal2( options[0] );
+  constexpr Literal<char const *, Length(options[0])> literal2( options[0] );
 
   BOOST_CHECK( IsSame<literal1>( str1 ) == true );
   BOOST_CHECK( IsSame<literal2>( options[0] ) == true );
@@ -81,8 +81,8 @@ BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
 BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
   using namespace jig::OPTION;
 
-  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
-  STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
+  STATIC_CONSTEXPR STRING::Literal literal1( "directory" );
+  STATIC_CONSTEXPR STRING::Literal literal2( "help" );
 
   char const * arg_dir = "directory";
 
@@ -107,8 +107,8 @@ BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
 BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
   using namespace jig::OPTION;
 
-  STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
-  STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
+  STATIC_CONSTEXPR STRING::Literal literal1( "directory" );
+  STATIC_CONSTEXPR STRING::Literal literal2( "help" );
 
   STATIC_CONSTEXPR OptionList<literal1, literal2> option;
   STATIC_CONSTEXPR auto literal( GetLiteral<0>( option ) );
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
   using namespace jig::OPTION;
   using namespace jig::OPTION::STRING;
 
-  OptionList<STRING::StringLiteral( "directory" ), STRING::StringLiteral( "help" )> options;
+  OptionList<STRING::Literal( "directory" ), STRING::Literal( "help" )> options;
 
   char const * arg_dir = "directory";
   auto [ head_ptr_dir, length_dir ] = options.isMatch( arg_dir );
@@ -194,8 +194,8 @@ BOOST_AUTO_TEST_CASE( test_OptionListisMatch ) {
   STATIC_CONSTEXPR char const * options[] = { "directory", "help" };
 
   OptionList<
-    STRING::StringLiteral<char const *, STRING::Length(options[0])>( options[0] )
-    , STRING::StringLiteral<char const *, STRING::Length(options[1])>( options[1] )
+    STRING::Literal<char const *, STRING::Length(options[0])>( options[0] )
+    , STRING::Literal<char const *, STRING::Length(options[1])>( options[1] )
   > option_list;
 
   auto [ ptr_dir, length_dir ] = option_list.isMatch( arg_dir );
@@ -244,8 +244,8 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   STATIC_CONSTEXPR char const * options[] = { "directory", "help" };
 
   OptionList<
-    STRING::StringLiteral<char const *, STRING::Length(options[0])>( options[0] )
-    , STRING::StringLiteral<char const *, STRING::Length(options[1])>( options[1] )
+    STRING::Literal<char const *, STRING::Length(options[0])>( options[0] )
+    , STRING::Literal<char const *, STRING::Length(options[1])>( options[1] )
   > option_list;
 
   auto [ bool_dir, index_dir ] = option_list.matchIndex( arg_dir );

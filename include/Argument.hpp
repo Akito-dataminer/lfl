@@ -95,15 +95,15 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。
 template<typename CharT, size_type N>
-struct StringLiteral {
-  explicit consteval StringLiteral( CharT const ( & string_literal )[N + 1] ) {
+struct Literal {
+  explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) {
     std::copy_n( string_literal, N, str_chars_ );
   }
 
-  StringLiteral<CharT, N> ( StringLiteral<CharT, N>  const & ) = default;
-  StringLiteral<CharT, N> & operator=( StringLiteral<CharT, N>  const & ) = default;
-  StringLiteral<CharT, N> ( StringLiteral<CharT, N> && ) = default;
-  StringLiteral<CharT, N> & operator=( StringLiteral<CharT, N> && ) = default;
+  Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
+  Literal<CharT, N> & operator=( Literal<CharT, N>  const & ) = default;
+  Literal<CharT, N> ( Literal<CharT, N> && ) = default;
+  Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
   CharT str_chars_[N];
 
@@ -113,8 +113,8 @@ struct StringLiteral {
 
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N>
-struct StringLiteral<CharT const *, N> {
-  explicit consteval StringLiteral( CharT const * string_literal_p ) {
+struct Literal<CharT const *, N> {
+  explicit consteval Literal( CharT const * string_literal_p ) {
     std::copy_n( string_literal_p, N, str_chars_ );
   }
 
@@ -126,7 +126,7 @@ struct StringLiteral<CharT const *, N> {
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>
-StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
+Literal( CharT const ( & literal )[N] ) -> Literal<CharT, N - 1>;
 
 // template<typename CharTp, UTIL::if_nullp_c<std::is_pointer_v<CharTp>>* = nullptr>
 // StringLiteral( CharTp literal ) -> StringLiteral<CharTp, Length( literal )>;
@@ -134,7 +134,7 @@ StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
 // クラス型をテンプレート引数に指定できるようになるのはC++20以降
 // ただし、クラスをテンプレート引数に指定できるためには、
 // テンプレート引数に指定されているクラスがいくつかの条件を充たしている必要がある。
-template<StringLiteral LITERAL>
+template<Literal LITERAL>
 constexpr bool IsSame( char_cptr const str ) {
   auto [ ptr, length ] = LITERAL.get();
 
@@ -151,30 +151,30 @@ constexpr bool IsSame( char_cptr const str ) {
 // そのため、StringLiteralの指定が一つだけのときの多重定義の一致度を高める必要がある。
 // StringLiteralが一つだけのときの一致度を高めるための手段として、
 // テンプレート引数の最後(nullptrの部分)で一致度が高くなるようにしている。
-template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL, UTIL::if_nullp_c< INDEX == ( OPTION_NUM - 1 ) >* = nullptr>
+template<index_type INDEX, size_type OPTION_NUM, STRING::Literal LITERAL, UTIL::if_nullp_c< INDEX == ( OPTION_NUM - 1 ) >* = nullptr>
 inline constexpr std::pair<bool, index_type> LiteralIndexImpl( char_cptr const arg_str ) {
   return ( STRING::IsSame<LITERAL>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : std::pair<bool, index_type>{ false, OPTION_NUM };
 }
 
-template<index_type INDEX, size_type OPTION_NUM, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+template<index_type INDEX, size_type OPTION_NUM, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
 inline constexpr std::pair<bool, index_type> LiteralIndexImpl( auto const arg_str ) {
   return ( STRING::IsSame<LITERAL_HEAD>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : LiteralIndexImpl<INDEX + 1, OPTION_NUM, LITERAL_TAIL...>( arg_str );
 }
 
-template<STRING::StringLiteral... LITERALS>
+template<STRING::Literal... LITERALS>
 constexpr auto LiteralIndex( char_cptr const arg_str ) {
   return LiteralIndexImpl<0, sizeof...( LITERALS ), LITERALS...>( arg_str );
 }
 
 // テンプレート引数に与えられた文字列リテラルを、
 // タプルのように保存するためのテンプレートクラス
-template<index_type INDEX, STRING::StringLiteral... LITERAL_TAIL>
+template<index_type INDEX, STRING::Literal... LITERAL_TAIL>
 struct OptionsImpl;
 
 template<index_type INDEX>
 struct OptionsImpl<INDEX> {};
 
-template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
 struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<INDEX + 1, LITERAL_TAIL...> {
   consteval decltype( LITERAL_HEAD ) const & literal() const noexcept { return LITERAL_HEAD; }
 
@@ -201,23 +201,23 @@ struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<IN
   }
 };
 
-template<STRING::StringLiteral ... LITERALS>
+template<STRING::Literal ... LITERALS>
 struct OptionList : public OptionsImpl<0, LITERALS...> {
   template<std::make_index_sequence<sizeof...( LITERALS )>()>
   constexpr auto discriminant( char const * str ) { return OptionsImpl<0, LITERALS...>::isMatch( str ); }
 };
 
 // 上記テンプレートクラスから文字列をコンパイル時に受け取るための即時関数
-template<index_type INDEX, STRING::StringLiteral LITERAL_HEAD, STRING::StringLiteral... LITERAL_TAIL>
+template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
 inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> const & option ) { return option.literal(); }
 
-template<index_type INDEX, STRING::StringLiteral... STRING_LITERALS>
+template<index_type INDEX, STRING::Literal... STRING_LITERALS>
 inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
 
 // ポインタ型からStringLiteral型に変換する。
 template<typename CharT, CharT const * Ptr, size_type length = STRING::Length( Ptr )>
 consteval auto ToStringLiteral () {
-  return STRING::StringLiteral<CharT const *, length>( Ptr );
+  return STRING::Literal<CharT const *, length>( Ptr );
 }
 
 // template<typename CharTp>
