@@ -16,24 +16,24 @@ BOOST_AUTO_TEST_SUITE( test_Argument )
 BOOST_AUTO_TEST_CASE( test_meta_func_ArraySize ) {
   constexpr char const * option_list[] = OPTION_LIST;
 
-  static_assert( ARG::ArraySize( option_list ) == 3, "ARG::ArraySize( option_list ) != 3" );
+  static_assert( jig::ArraySize( option_list ) == 3, "jig::ArraySize( option_list ) != 3" );
 
   constexpr char const option_str[] = "directory";
   // constexpr char const * option_str = "directory"; // this is errored.
-  static_assert( ARG::ArraySize( option_str ) == 10, "ARG::ArraySize( option_str[] ) != 10" );
+  static_assert( jig::ArraySize( option_str ) == 10, "jig::ArraySize( option_str[] ) != 10" );
 
-  static_assert( ARG::ArraySize( "directory" ) == 10, "ARG::ArraySize( \"directory\" ) != 10");
+  static_assert( jig::ArraySize( "directory" ) == 10, "jig::ArraySize( \"directory\" ) != 10");
 
   // Below code is errored.
-  // static_assert( ARG::ArraySize<decltype( option_list ), 1>( option_list ) == 0, "ARG::ArraySize( option_list ) != 0" );
+  // static_assert( jig::ArraySize<decltype( option_list ), 1>( option_list ) == 0, "jig::ArraySize( option_list ) != 0" );
   //
   // constexpr int i = 10;
-  // static_assert( ARG::ArraySize( i ) == 0 );
+  // static_assert( jig::ArraySize( i ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( test_meta_func_Length ) {
   constexpr char const option_str[] = "directory";
-  static_assert( ARG::OPTION::STRING::Length( option_str ) == 9, "ARG::OPTION::STRING::Length( option_list[0] ) != 9" );
+  static_assert( jig::OPTION::STRING::Length( option_str ) == 9, "jig::OPTION::STRING::Length( option_list[0] ) != 9" );
 }
 
 BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
@@ -41,18 +41,18 @@ BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
   constexpr char const str2[] = "directory";
   constexpr char const str3[] = "help";
 
-  static_assert( ARG::OPTION::STRING::IsSameN( str1, str2, 9 ) == true, "ARG::OPTION::STRING::IsSameN( str1, str2, 9 ) != true" );
-  static_assert( ARG::OPTION::STRING::IsSameN( str1, str3, 9 ) == false, "ARG::OPTION::STRING::IsSameN( str1, str3, 9 ) != false" );
+  static_assert( jig::OPTION::STRING::IsSameN( str1, str2, 9 ) == true, "jig::OPTION::STRING::IsSameN( str1, str2, 9 ) != true" );
+  static_assert( jig::OPTION::STRING::IsSameN( str1, str3, 9 ) == false, "jig::OPTION::STRING::IsSameN( str1, str3, 9 ) != false" );
 
-  bool is_same_1_2 = ARG::OPTION::STRING::IsSameN( str1, str2, 9 );
-  bool is_same_1_3 = ARG::OPTION::STRING::IsSameN( str1, str3, 9 );
+  bool is_same_1_2 = jig::OPTION::STRING::IsSameN( str1, str2, 9 );
+  bool is_same_1_3 = jig::OPTION::STRING::IsSameN( str1, str3, 9 );
 
   BOOST_CHECK( is_same_1_2 == true );
   BOOST_CHECK( is_same_1_3 == false );
 }
 
 BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
-  using namespace ARG::OPTION::STRING;
+  using namespace jig::OPTION::STRING;
 
   STATIC_CONSTEXPR StringLiteral literal1( "directory" );
 
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
-  using namespace ARG::OPTION::STRING;
+  using namespace jig::OPTION::STRING;
 
   STATIC_CONSTEXPR char const * str1 = "directory";
   STATIC_CONSTEXPR StringLiteral<char const *, Length(str1)> literal1( str1 );
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( test_class_template_StringLiteral ) {
 }
 
 BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
   STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE( constexpr_func_LiteralIndex ) {
 }
 
 BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   STATIC_CONSTEXPR STRING::StringLiteral literal1( "directory" );
   STATIC_CONSTEXPR STRING::StringLiteral literal2( "help" );
@@ -117,8 +117,8 @@ BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
-  using namespace ARG::OPTION;
-  using namespace ARG::OPTION::STRING;
+  using namespace jig::OPTION;
+  using namespace jig::OPTION::STRING;
 
   OptionList<STRING::StringLiteral( "directory" ), STRING::StringLiteral( "help" )> options;
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   STATIC_CONSTEXPR char const option1[] = "directory";
   constexpr auto literal1 = ToStringLiteral<char, option1>();
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   STATIC_CONSTEXPR char const option1[] = "directory";
   constexpr auto literal1 = ToStringLiteral<char, option1>();
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_OptionListisMatch ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   char const * arg_dir = "directory";
   char const * arg_help = "help";
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE( test_OptionListisMatch ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
-  using namespace ARG::OPTION;
+  using namespace jig::OPTION;
 
   char const * arg_dir = "directory";
   char const * arg_help = "help";
