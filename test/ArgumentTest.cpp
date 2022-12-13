@@ -54,6 +54,8 @@ BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
 BOOST_AUTO_TEST_CASE( constexpr_func_IsSame ) {
   using namespace jig::OPTION::STRING;
 
+  // This is error.
+  // Literal<char, 0> literal0( "" );
   STATIC_CONSTEXPR Literal literal1( "directory" );
 
   static_assert( IsSame<literal1>( "directory" ) == true );

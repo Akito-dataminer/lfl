@@ -94,7 +94,7 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
 
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。
-template<typename CharT, size_type N>
+template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal {
   explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) {
     std::copy_n( string_literal, N, str_chars_ );
@@ -105,15 +105,15 @@ struct Literal {
   Literal<CharT, N> ( Literal<CharT, N> && ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
-  CharT str_chars_[N];
+  CharT str_chars_[N]; // N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
 
   consteval decltype( N ) size() const noexcept { return N; }
   consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
 };
 
 // ポインタ対応のための特殊化
-template<typename CharT, size_type N>
-struct Literal<CharT const *, N> {
+template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
+struct Literal<CharT const *, N, NPTR> {
   explicit consteval Literal( CharT const * string_literal_p ) {
     std::copy_n( string_literal_p, N, str_chars_ );
   }
