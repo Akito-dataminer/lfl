@@ -1,4 +1,4 @@
-#include "Argument.hpp"
+#include "jig.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/tools/interface.hpp>
@@ -11,7 +11,7 @@
 
 #define OPTION_LIST { "directory", "help", "version" }
 
-BOOST_AUTO_TEST_SUITE( test_Argument )
+BOOST_AUTO_TEST_SUITE( test_jig )
 
 BOOST_AUTO_TEST_CASE( test_meta_func_ArraySize ) {
   constexpr char const * option_list[] = OPTION_LIST;
