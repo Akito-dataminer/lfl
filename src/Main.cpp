@@ -153,27 +153,25 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
       STRING::Literal<char const *, STRING::Length(options[2])>( options[2] )
     > option_list;
 
-    for ( size_t i = 0; i < jig::ArraySize( options ); ++i ) {
-      char const * key_head = arg + null_exclude_length;
-      auto [head_ptr, length] = option_list.isMatch( key_head );
-      // std::cerr << "key_head : " << key_head << std::endl;
-      // std::cerr << std::string( head_ptr, length ) << std::endl;
+    char const * key_head = arg + null_exclude_length;
+    auto [head_ptr, length] = option_list.isMatch( key_head );
+    // std::cerr << "key_head : " << key_head << std::endl;
+    // std::cerr << std::string( head_ptr, length ) << std::endl;
 
-      if ( head_ptr != nullptr ) {
-        // valueを取るオプションか、valueを取らないオプションかによって、
-        // valueに入れる値を変える。
-        auto [is_match, index] = option_list.matchIndex( key_head );
-        // std::cerr << "std::string( head_ptr ): " << std::string( head_ptr, length ) << std::endl;
+    if ( head_ptr != nullptr ) {
+      // valueを取るオプションか、valueを取らないオプションかによって、
+      // valueに入れる値を変える。
+      auto [is_match, index] = option_list.matchIndex( key_head );
+      // std::cerr << "std::string( head_ptr ): " << std::string( head_ptr, length ) << std::endl;
 
-        if ( ( index == 0 ) || ( index == 1 ) ) {
-          // unary option
-          key_ = std::string( head_ptr, length );
-          value_ = "";
-        } else {
-          // binomial option
-          key_ = std::string( head_ptr, length );
-          value_ = arg_value;
-        }
+      if ( ( index == 0 ) || ( index == 1 ) ) {
+        // unary option
+        key_ = std::string( head_ptr, length );
+        value_ = "";
+      } else {
+        // binomial option
+        key_ = std::string( head_ptr, length );
+        value_ = std::string( arg_value, std::strlen( arg_value ) );
       }
     }
   } else {
