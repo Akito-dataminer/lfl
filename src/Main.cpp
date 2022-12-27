@@ -5,6 +5,7 @@
 *****************************************/
 
 #include "Util/Comparable.hpp"
+#include "jig.hpp"
 
 // std
 #include <cstring>
@@ -108,43 +109,73 @@ Path::~Path() {
 
 bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() ); }
 
-enum class OptionKey {
-  DIRECTORY,
-  HELP,
-  NUM
-};
+// enum class OptionKey {
+//   DIRECTORY,
+//   HELP,
+//   NUM
+// };
 
+// 基本的にはstd::mapと同じだが、
+// ディレクトリが複数指定される可能性もある。
+// そのため、キーの重複が許可されている必要があるので、
+// std::mapは使えない。
 class CmdOption {
 public:
-  CmdOption( char const * );
+  CmdOption( char const *, char const * );
   ~CmdOption();
 
-  OptionKey getKey() const noexcept { return key_; }
-  std::string const & getString() const noexcept { return option_; }
+  std::string const & getKey() const noexcept { return key_; }
+  std::string const & getValue() const noexcept { return value_; }
+  bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
 private:
-  OptionKey key_;
-  std::string option_;
+  std::string key_;
+  std::string value_;
 };
 
-CmdOption::CmdOption( char const * arg ) {
-  const int null_exclude_length = SPECIFIER_LENGTH - 1;
+// argはオプションかもしれないし、そうでないかもしれない。
+CmdOption::CmdOption( char const * arg, char const * arg_value ) {
+  using namespace jig::OPTION;
 
-  if ( strlen( arg ) < SPECIFIER_LENGTH ) {
-    key_ = OptionKey::DIRECTORY;
-    option_ = arg;
+  STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;
+
+  STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
+
+  if ( std::strlen( arg ) < SPECIFIER_LENGTH ) {
+    // argがオプション指定子よりも短い時点で、
+    // オプションでないことが確定する。
+    key_ = options[jig::ArraySize( options ) - 1];
+    value_ = arg;
   } else if ( strncmp( arg, OPTION_SPECIFIER, null_exclude_length ) == 0 ) {
-    char const * key_head = arg + null_exclude_length;
-    std::cout << "key_head : " << key_head << std::endl;
+    OptionList<
+      STRING::Literal<char const *, STRING::Length(options[0])>( options[0] ),
+      STRING::Literal<char const *, STRING::Length(options[1])>( options[1] ),
+      STRING::Literal<char const *, STRING::Length(options[2])>( options[2] )
+    > option_list;
 
-    if ( strncmp( key_head, "help", 4 ) == 0) {
-      key_ = OptionKey::HELP;
-      option_ = "help";
-    } else {
-      throw std::invalid_argument( "invalid argument" );
+    char const * key_head = arg + null_exclude_length;
+    auto [head_ptr, length] = option_list.isMatch( key_head );
+    // std::cerr << "key_head : " << key_head << std::endl;
+    // std::cerr << std::string( head_ptr, length ) << std::endl;
+
+    if ( head_ptr != nullptr ) {
+      // valueを取るオプションか、valueを取らないオプションかによって、
+      // valueに入れる値を変える。
+      auto [is_match, index] = option_list.matchIndex( key_head );
+      // std::cerr << "std::string( head_ptr ): " << std::string( head_ptr, length ) << std::endl;
+
+      if ( ( index == 0 ) || ( index == 1 ) ) {
+        // unary option
+        key_ = std::string( head_ptr, length );
+        value_ = "";
+      } else {
+        // binomial option
+        key_ = std::string( head_ptr, length );
+        value_ = std::string( arg_value, std::strlen( arg_value ) );
+      }
     }
   } else {
-    key_ = OptionKey::DIRECTORY;
-    option_ = arg;
+    key_ = options[jig::ArraySize( options ) - 1];
+    value_ = arg;
   }
 }
 
@@ -156,8 +187,8 @@ public:
   CmdLine( int const, char const * [] );
   ~CmdLine();
 
-  CmdOption getOption( int const index ) { return options_[index]; }
-  int argNum() { return argument_num_; }
+  CmdOption getOption( int const index ) const noexcept { return options_[index]; }
+  int argNum() const noexcept { return argument_num_; }
 
   bool isThereHelp() const noexcept;
 private:
@@ -167,10 +198,20 @@ private:
 
 CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
 : argument_num_( 1 ) {
+  // コマンドライン上で与えられたすべての文字列を読み込むと前提している。
+  // そのため、与えられた文字列が一つだけのときは、
+  // 実行パス以外には何も指定されていないということ(=オプションが指定されていない)。
   if ( arg_count != 1 ) {
     try {
-      for ( int arg_index = 1; arg_index != arg_count; ++arg_index ) {
-        options_.emplace_back( arg_chars[arg_index] );
+      for ( int arg_index = 1; arg_index < arg_count; ++arg_index ) {
+        if ( arg_index < ( arg_count - 1 ) ) {
+          // std::cerr << "used binomial" << std::endl;
+          options_.emplace_back( arg_chars[arg_index], arg_chars[arg_index + 1] );
+        } else {
+          options_.emplace_back( arg_chars[arg_index], nullptr );
+        }
+
+        if ( ( options_.end() - 1 )->isUnaryOption() == false ) { ++arg_index; }
       }
     } catch ( ... ) {
       throw;
@@ -184,11 +225,14 @@ CmdLine::~CmdLine() {
 }
 
 bool CmdLine::isThereHelp() const noexcept {
+  // std::cerr << "options_.size(): " << options_.size() << std::endl;
+
   for ( auto itr : options_ ) {
-    if ( itr.getKey() == OptionKey::HELP ) { return 1; }
+    // std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
+    if ( itr.getKey() == std::string( "help" ) ) { return true; }
   }
 
-  return 0;
+  return false;
 }
 
 class Time : public UTIL::COMPARABLE::CompDef<Time> {
@@ -255,7 +299,8 @@ int main( int argc, char const * argv [] ) {
   try {
     CmdLine cmd_line( argc, argv );
 
-    if ( cmd_line.isThereHelp() == 1 ) {
+    // std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
+    if ( cmd_line.isThereHelp() == true ) {
       Usage().display( std::cout );
       return 0;
     }
