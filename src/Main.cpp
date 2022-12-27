@@ -18,8 +18,8 @@
 #include <windows.h>
 
 constexpr char DELIMITER = '\\';
-constexpr int SPECIFIER_LENGTH = 3; // add the NULL character in the string tail.
-constexpr char OPTION_SPECIFIER[SPECIFIER_LENGTH] = "--";
+constexpr char OPTION_SPECIFIER[] = "--";
+constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
 
 class Usage {
 public:
