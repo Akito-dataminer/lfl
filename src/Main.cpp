@@ -205,7 +205,7 @@ CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
     try {
       for ( int arg_index = 1; arg_index < arg_count; ++arg_index ) {
         if ( arg_index < ( arg_count - 1 ) ) {
-          std::cerr << "used binomial" << std::endl;
+          // std::cerr << "used binomial" << std::endl;
           options_.emplace_back( arg_chars[arg_index], arg_chars[arg_index + 1] );
         } else {
           options_.emplace_back( arg_chars[arg_index], nullptr );
@@ -225,10 +225,10 @@ CmdLine::~CmdLine() {
 }
 
 bool CmdLine::isThereHelp() const noexcept {
-  std::cerr << "options_.size(): " << options_.size() << std::endl;
+  // std::cerr << "options_.size(): " << options_.size() << std::endl;
 
   for ( auto itr : options_ ) {
-    std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
+    // std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
     if ( itr.getKey() == std::string( "help" ) ) { return true; }
   }
 
@@ -299,7 +299,7 @@ int main( int argc, char const * argv [] ) {
   try {
     CmdLine cmd_line( argc, argv );
 
-    std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
+    // std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
     if ( cmd_line.isThereHelp() == true ) {
       Usage().display( std::cout );
       return 0;
