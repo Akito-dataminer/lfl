@@ -189,6 +189,7 @@ public:
 
   CmdOption getOption( int const index ) const noexcept { return options_[index]; }
   int argNum() const noexcept { return argument_num_; }
+  std::vector<std::string> optionList( std::string const & );
 
   bool isThereHelp() const noexcept;
 private:
@@ -222,6 +223,16 @@ CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
 }
 
 CmdLine::~CmdLine() {
+}
+
+std::vector<std::string> CmdLine::optionList( std::string const & key ) {
+  std::vector<std::string> option_list;
+
+  for ( auto itr : options_ ) {
+    if ( itr.getKey() == key ) { option_list.emplace_back( itr.getValue() ); }
+  }
+
+  return option_list;
 }
 
 bool CmdLine::isThereHelp() const noexcept {
@@ -311,8 +322,10 @@ int main( int argc, char const * argv [] ) {
       std::cout << "yet unimplemented" << std::endl;
       return 0;
     } else {
-      for ( int arg_index = 1; arg_index != argc; ++arg_index ) {
-        path_list.emplace_back( new Path( argv[arg_index], PathTag::ARG ) );
+      std::vector<std::string> directory_list = cmd_line.optionList( "directory" );
+
+      for ( auto itr : directory_list ) {
+        path_list.emplace_back( new Path( itr, PathTag::ARG ) );
       }
     }
   } catch ( std::invalid_argument const & e ) {
