@@ -5,6 +5,7 @@
 *****************************************/
 
 #include "Util/Comparable.hpp"
+#include "jig.hpp"
 
 // std
 #include <cstring>
@@ -108,43 +109,66 @@ Path::~Path() {
 
 bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() ); }
 
-enum class OptionKey {
-  DIRECTORY,
-  HELP,
-  NUM
-};
+// enum class OptionKey {
+//   DIRECTORY,
+//   HELP,
+//   NUM
+// };
 
+// 基本的にはstd::mapと同じだが、
+// ディレクトリが複数指定される可能性もある。
+// そのため、キーの重複が許可されている必要があるので、
+// std::mapは使えない。
 class CmdOption {
 public:
-  CmdOption( char const * );
+  CmdOption( char const *, char const * );
   ~CmdOption();
 
-  OptionKey getKey() const noexcept { return key_; }
-  std::string const & getString() const noexcept { return option_; }
+  std::string const & getKey() const noexcept { return key_; }
+  std::string const & getString() const noexcept { return value_; }
 private:
-  OptionKey key_;
-  std::string option_;
+  std::string key_;
+  std::string value_;
 };
 
-CmdOption::CmdOption( char const * arg ) {
-  const int null_exclude_length = SPECIFIER_LENGTH - 1;
+CmdOption::CmdOption( char const * arg, char const * arg_value ) {
+  // argはオプションかもしれないし、そうでないかもしれない。
 
-  if ( strlen( arg ) < SPECIFIER_LENGTH ) {
-    key_ = OptionKey::DIRECTORY;
-    option_ = arg;
+  using namespace jig::OPTION;
+
+  STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;
+
+  STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
+
+  if ( std::strlen( arg ) < SPECIFIER_LENGTH ) {
+    // argがオプション指定子よりも短い時点で、
+    // オプションでないことが確定する。
+    key_ = options[jig::ArraySize( options ) - 1];
+    value_ = arg;
   } else if ( strncmp( arg, OPTION_SPECIFIER, null_exclude_length ) == 0 ) {
-    char const * key_head = arg + null_exclude_length;
-    std::cout << "key_head : " << key_head << std::endl;
+    OptionList<
+      STRING::Literal<char const *, STRING::Length(options[0])>( options[0] ),
+      STRING::Literal<char const *, STRING::Length(options[1])>( options[1] ),
+      STRING::Literal<char const *, STRING::Length(options[2])>( options[2] )
+    > option_list;
 
-    if ( strncmp( key_head, "help", 4 ) == 0) {
-      key_ = OptionKey::HELP;
-      option_ = "help";
-    } else {
-      throw std::invalid_argument( "invalid argument" );
+    for ( size_t i = 0; i < jig::ArraySize( options ); ++i ) {
+      char const * key_head = arg + null_exclude_length;
+      auto [head_ptr, length] = option_list.isMatch( key_head );
+      // std::cerr << "key_head : " << key_head << std::endl;
+      // std::cerr << std::string( head_ptr, length ) << std::endl;
+
+      if ( head_ptr != nullptr ) {
+        // valueを取るオプションか、valueを取らないオプションかによって、
+        // valueに入れる値が変わるようにしたい。
+        // std::cerr << "std::string( head_ptr ): " << std::string( head_ptr, length ) << std::endl;
+        key_ = std::string( head_ptr, length );
+        value_ = arg_value;
+      }
     }
   } else {
-    key_ = OptionKey::DIRECTORY;
-    option_ = arg;
+    key_ = options[jig::ArraySize( options ) - 1];
+    value_ = arg;
   }
 }
 
@@ -167,10 +191,17 @@ private:
 
 CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
 : argument_num_( 1 ) {
+  // コマンドライン上で与えられたすべての文字列を読み込む前提
+  // そのため、与えられた文字列が一つだけのときは、
+  // 実行パス以外には何も指定されていないということ(=オプションが指定されていない)。
   if ( arg_count != 1 ) {
     try {
       for ( int arg_index = 1; arg_index != arg_count; ++arg_index ) {
-        options_.emplace_back( arg_chars[arg_index] );
+        if ( argument_num_ != arg_count ) {
+          options_.emplace_back( arg_chars[arg_index], arg_chars[arg_index + 1] );
+        } else {
+          options_.emplace_back( arg_chars[arg_index], nullptr );
+        }
       }
     } catch ( ... ) {
       throw;
@@ -185,7 +216,8 @@ CmdLine::~CmdLine() {
 
 bool CmdLine::isThereHelp() const noexcept {
   for ( auto itr : options_ ) {
-    if ( itr.getKey() == OptionKey::HELP ) { return 1; }
+    std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
+    if ( itr.getKey() == std::string( "help" ) ) { return 1; }
   }
 
   return 0;
