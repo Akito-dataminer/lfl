@@ -132,9 +132,8 @@ private:
   std::string value_;
 };
 
+// argはオプションかもしれないし、そうでないかもしれない。
 CmdOption::CmdOption( char const * arg, char const * arg_value ) {
-  // argはオプションかもしれないし、そうでないかもしれない。
-
   using namespace jig::OPTION;
 
   STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;
@@ -206,12 +205,13 @@ CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
     try {
       for ( int arg_index = 1; arg_index < arg_count; ++arg_index ) {
         if ( arg_index < ( arg_count - 1 ) ) {
+          std::cerr << "used binomial" << std::endl;
           options_.emplace_back( arg_chars[arg_index], arg_chars[arg_index + 1] );
         } else {
           options_.emplace_back( arg_chars[arg_index], nullptr );
         }
 
-        if ( options_.end()->isUnaryOption() == false ) { ++arg_index; }
+        if ( ( options_.end() - 1 )->isUnaryOption() == false ) { ++arg_index; }
       }
     } catch ( ... ) {
       throw;
