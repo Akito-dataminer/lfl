@@ -1,7 +1,6 @@
-#define VERSION_MAJOR   ${VERSION_MAJOR}
-#define VERSION_MINOR   ${VERSION_MINOR}
-#define BUILD_NUMBER    ${BUILD_NUMBER}
- 
+#define TAG_AND_BUILD_STRING "${TAG_AND_BUILD_STRING}"
+#define TOOL_NAME            "${TOOL_NAME}"
+
 #define VERSION_STRING  \
-    "${PRODUCT_NAME} ${VERSION_MAJOR}.${VERSION_MINOR}.${BUILD_NUMBER}\n" \
+    "${TOOL_NAME} ${TAG_AND_BUILD_STRING}\n" \
     "Copyright(C) 2022 ${LICENSE_HOLDER} all rights reserved."
