@@ -202,10 +202,7 @@ struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<IN
 };
 
 template<STRING::Literal ... LITERALS>
-struct OptionList : public OptionsImpl<0, LITERALS...> {
-  template<std::make_index_sequence<sizeof...( LITERALS )>()>
-  constexpr auto discriminant( char const * str ) { return OptionsImpl<0, LITERALS...>::isMatch( str ); }
-};
+struct OptionList : public OptionsImpl<0, LITERALS...> {};
 
 // 上記テンプレートクラスから文字列をコンパイル時に受け取るための即時関数
 template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
