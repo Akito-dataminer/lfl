@@ -106,7 +106,7 @@ struct Literal {
   CharT str_chars_[N]; // N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
 
   consteval decltype( N ) size() const noexcept { return N; }
-  consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
+  consteval char_cptr get() const noexcept { return str_chars_; }
 };
 
 // ポインタ対応のための特殊化
@@ -119,7 +119,7 @@ struct Literal<CharT const *, N, NPTR> {
   CharT str_chars_[N];
 
   consteval decltype( N ) size() const noexcept { return N; }
-  consteval std::pair<CharT const *, decltype( N )> get() const noexcept { return { str_chars_, N }; }
+  consteval char_cptr get() const noexcept { return str_chars_; }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
@@ -134,7 +134,8 @@ Literal( CharT const ( & literal )[N] ) -> Literal<CharT, N - 1>;
 // テンプレート引数に指定されているクラスがいくつかの条件を充たしている必要がある。
 template<Literal LITERAL>
 constexpr bool IsSame( char_cptr const str ) {
-  auto [ ptr, length ] = LITERAL.get();
+  constexpr auto length = LITERAL.size();
+  constexpr auto ptr = LITERAL.get();
 
   return ( IsSameN( ptr, str, length ) == true ) ? true : false;
 }
@@ -180,10 +181,10 @@ struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<IN
   constexpr auto isMatch( char const * str ) {
     if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? LITERAL_HEAD.get() : decltype( LITERAL_HEAD.get() ) { nullptr, 0 };
+        ? std::pair<char_cptr, size_type>{ LITERAL_HEAD.get(), LITERAL_HEAD.size() } : std::pair<char_cptr, size_type>{ nullptr, 0 };
     } else {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? LITERAL_HEAD.get() : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
+        ? std::pair<char_cptr, size_type>{ LITERAL_HEAD.get(), LITERAL_HEAD.size() } : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
     }
   }
 
