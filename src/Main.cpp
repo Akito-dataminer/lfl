@@ -134,6 +134,7 @@ private:
 
 // argはオプションかもしれないし、そうでないかもしれない。
 CmdOption::CmdOption( char const * arg, char const * arg_value ) {
+  using namespace jig;
   using namespace jig::OPTION;
 
   STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;

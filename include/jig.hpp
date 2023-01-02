@@ -65,8 +65,6 @@ using size_type = std::size_t;
 template <typename T, size_type SIZE>
 constexpr size_type ArraySize( T (&)[SIZE] ) { return SIZE; }
 
-namespace OPTION {
-
 namespace STRING {
 
 consteval index_type Length( char const * const string ) {
@@ -143,6 +141,7 @@ constexpr bool IsSame( char_cptr const str ) {
 
 } // STRING
 
+namespace OPTION {
 // テンプレート引数に与えられたStringLiteralの集合から、
 // マッチするものがあれば、そのインデックスを返して、
 // マッチするものが無ければfalseを返す(std::pairとして)。
