@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE( test_Option_isMatch ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
-  using namespace jig::OPTION;
+  using namespace jig::STRING;
 
   STATIC_CONSTEXPR char const option1[] = "directory";
   constexpr auto literal1 = ToStringLiteral<char, option1>();
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
 }
 
 BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
-  using namespace jig::OPTION;
+  using namespace jig::STRING;
 
   STATIC_CONSTEXPR char const option1[] = "directory";
   constexpr auto literal1 = ToStringLiteral<char, option1>();
@@ -166,6 +166,7 @@ BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
 BOOST_AUTO_TEST_CASE( test_OptionListisMatch ) {
   using namespace jig;
   using namespace jig::OPTION;
+  using namespace jig::STRING;
 
   char const * arg_dir = "directory";
   char const * arg_help = "help";
@@ -216,6 +217,7 @@ BOOST_AUTO_TEST_CASE( test_OptionListisMatch ) {
 
 BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   using namespace jig::OPTION;
+  using namespace jig::STRING;
 
   char const * arg_dir = "directory";
   char const * arg_help = "help";

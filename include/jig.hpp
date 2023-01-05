@@ -140,6 +140,12 @@ constexpr bool IsSame( char_cptr const str ) {
   return ( IsSameN( ptr, str, length ) == true ) ? true : false;
 }
 
+// ポインタ型からStringLiteral型に変換する。
+template<typename CharT, CharT const * Ptr, size_type length = STRING::Length( Ptr )>
+consteval auto ToStringLiteral () {
+  return STRING::Literal<CharT const *, length>( Ptr );
+}
+
 } // STRING
 
 namespace OPTION {
@@ -210,12 +216,6 @@ inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<
 
 template<index_type INDEX, STRING::Literal... STRING_LITERALS>
 inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
-
-// ポインタ型からStringLiteral型に変換する。
-template<typename CharT, CharT const * Ptr, size_type length = STRING::Length( Ptr )>
-consteval auto ToStringLiteral () {
-  return STRING::Literal<CharT const *, length>( Ptr );
-}
 
 // template<typename CharTp>
 // struct MakeOptionListImpl {
