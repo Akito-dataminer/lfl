@@ -266,4 +266,13 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   BOOST_CHECK( index_typo == 2 );
 }
 
+BOOST_AUTO_TEST_CASE( test_output_stream ) {
+  using namespace jig;
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+
+  std::cout << literal << std::endl;
+}
+
 BOOST_AUTO_TEST_SUITE_END()

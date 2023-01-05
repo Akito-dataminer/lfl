@@ -46,6 +46,7 @@
 #include <utility>
 #include <type_traits>
 #include <algorithm>
+#include <ostream>
 
 #define STATIC_CONSTEXPR static constexpr
 
@@ -106,8 +107,13 @@ struct Literal {
   CharT str_chars_[N]; // N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
 
   consteval decltype( N ) size() const noexcept { return N; }
-  consteval char_cptr get() const noexcept { return str_chars_; }
+  constexpr char_cptr get() const noexcept { return str_chars_; }
 };
+
+template<typename CharT, size_type N>
+inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostream<CharT> & lhs, Literal<CharT, N> const & rhs ) {
+  return lhs << rhs.get();
+}
 
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
