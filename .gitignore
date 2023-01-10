@@ -1,5 +1,5 @@
 build/
 bin/
 .cache/
-wt-
+wt-*
 include/version.h
