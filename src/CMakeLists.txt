@@ -22,8 +22,9 @@ target_compile_features( ${OUTPUT} PUBLIC cxx_std_20 )
 ##############################
 # バージョン情報を定義したヘッダファイルを生成する
 ##############################
-set( VERSION_SCRIPT_PATH ${PROJECT_SOURCE_DIR}/version.cmake )
-set( VERSION_CONFIGURE_PATH ${PROJECT_SOURCE_DIR}/version.h.in )
+set( CMAKE_SCRIPT_PATH ${PROJECT_SOURCE_DIR}/cmake )
+set( VERSION_SCRIPT_PATH ${CMAKE_SCRIPT_PATH}/version.cmake )
+set( VERSION_CONFIGURE_PATH ${CMAKE_SCRIPT_PATH}/version.h.in )
 
 add_custom_command(OUTPUT ${VERSION_INFORMATION_HEADER}
   DEPENDS ${VERSION_SCRIPT_PATH} ${VERSION_CONFIGURE_PATH}
