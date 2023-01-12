@@ -15,4 +15,4 @@ if( EXISTS "${CMAKE_SOURCE_DIR}/.git" )
   endif( GIT_FOUND )
 endif()
 
-configure_file( version.h.in ${CMAKE_SOURCE_DIR}/include/version.h )
+configure_file( ${CMAKE_CURRENT_LIST_DIR}/version.h.in ${CMAKE_SOURCE_DIR}/include/version.h )
