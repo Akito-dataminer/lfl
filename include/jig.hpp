@@ -74,8 +74,13 @@ consteval index_type Length( char const * const string ) {
   return index;
 }
 
-template<class StringProxy>
-consteval size_type Length() {
+template<class T>
+concept HasFunctionCall = requires() {
+  T();
+};
+
+template<HasFunctionCall StringProxy>
+consteval index_type Length() {
   index_type index = 0;
   while ( StringProxy()()[index] != '\0' ) { ++index; }
   return index;
