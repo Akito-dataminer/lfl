@@ -91,23 +91,40 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
   return true;
 }
 
+// N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
+template<typename CharT, size_type N>
+struct ExcludeNULLLiteralImpl {
+  using value_type = CharT;
+  using const_pointer = CharT const *;
+  using reference = CharT &;
+  using const_reference = CharT const &;
+
+  template<size_type... INDICES>
+  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1], std::index_sequence<INDICES...> ) : str_{ literal[INDICES] ... } {}
+
+  value_type str_[N];
+  STATIC_CONSTEXPR decltype( N ) len_ = N;
+};
+
+// 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
+template<typename CharT, size_type N>
+ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N>() ) -> ExcludeNULLLiteralImpl<CharT, N - 1>;
+
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal {
-  explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) {
-    std::copy_n( string_literal, N, str_chars_ );
-  }
+  explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : literal_impl_( string_literal, std::make_index_sequence<N>() ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> ( Literal<CharT, N> && ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
-  CharT str_chars_[N]; // N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
+  ExcludeNULLLiteralImpl<CharT, N> literal_impl_;
 
-  consteval decltype( N ) size() const noexcept { return N; }
-  constexpr char_cptr get() const noexcept { return str_chars_; }
+  consteval decltype( N ) size() const noexcept { return literal_impl_.len_; }
+  constexpr char_cptr get() const noexcept { return literal_impl_.str_; }
 };
 
 template<typename CharT, size_type N>
@@ -131,9 +148,6 @@ struct Literal<CharT const *, N, NPTR> {
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>
 Literal( CharT const ( & literal )[N] ) -> Literal<CharT, N - 1>;
-
-// template<typename CharTp, UTIL::if_nullp_c<std::is_pointer_v<CharTp>>* = nullptr>
-// StringLiteral( CharTp literal ) -> StringLiteral<CharTp, Length( literal )>;
 
 // クラス型をテンプレート引数に指定できるようになるのはC++20以降
 // ただし、クラスをテンプレート引数に指定できるためには、
