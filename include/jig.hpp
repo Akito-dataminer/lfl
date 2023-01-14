@@ -161,6 +161,11 @@ struct Literal<CharT const *, N, NPTR> {
 template<typename CharT, size_type N>
 Literal( CharT const ( & literal )[N] ) -> Literal<CharT, N - 1>;
 
+template<HasFunctionCall StringProxy>
+consteval auto MakeString() {
+  return Literal<decltype( StringProxy()() ), Length<StringProxy>()>( StringProxy()() );
+}
+
 // クラス型をテンプレート引数に指定できるようになるのはC++20以降
 // ただし、クラスをテンプレート引数に指定できるためには、
 // テンプレート引数に指定されているクラスがいくつかの条件を充たしている必要がある。

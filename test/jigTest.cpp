@@ -43,6 +43,19 @@ BOOST_AUTO_TEST_CASE( test_meta_func_Length ) {
   static_assert( jig::STRING::Length<SendString>() == 9 );
 }
 
+BOOST_AUTO_TEST_CASE( test_make_literal_func ) {
+  using namespace jig::STRING;
+  STATIC_CONSTEXPR char const str[] = "directory";
+
+  struct SendString {
+    constexpr char const * operator()() { return str; }
+  };
+
+  constexpr auto literal = MakeString<SendString>();
+  static_assert( literal.size() == 9 );
+  static_assert( literal.get()[0] == 'd' );
+}
+
 BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
   constexpr char const str1[] = "directory";
   constexpr char const str2[] = "directory";
