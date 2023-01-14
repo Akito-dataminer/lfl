@@ -111,8 +111,10 @@ struct ExcludeNULLLiteralImpl {
   using reference = CharT &;
   using const_reference = CharT const &;
 
+  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) { std::copy_n( literal, N, str_ ); }
+
   template<size_type... INDICES>
-  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1], std::index_sequence<INDICES...> ) : str_{ literal[INDICES] ... } {}
+  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> ) : str_{ literal_p[INDICES] ... } {}
 
   value_type str_[N];
   STATIC_CONSTEXPR decltype( N ) len_ = N;
@@ -135,7 +137,7 @@ struct Literal {
 
   ExcludeNULLLiteralImpl<CharT, N> literal_impl_;
 
-  consteval decltype( N ) size() const noexcept { return literal_impl_.len_; }
+  consteval decltype( literal_impl_.len_ ) size() const noexcept { return literal_impl_.len_; }
   constexpr char_cptr get() const noexcept { return literal_impl_.str_; }
 };
 
@@ -147,14 +149,12 @@ inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostr
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
 struct Literal<CharT const *, N, NPTR> {
-  explicit consteval Literal( CharT const * string_literal_p ) {
-    std::copy_n( string_literal_p, N, str_chars_ );
-  }
+  explicit consteval Literal( CharT const * string_literal_p ) : literal_impl_( string_literal_p, std::make_index_sequence<N>() ) {}
 
-  CharT str_chars_[N];
+  ExcludeNULLLiteralImpl<CharT, N> literal_impl_;
 
-  consteval decltype( N ) size() const noexcept { return N; }
-  consteval char_cptr get() const noexcept { return str_chars_; }
+  consteval decltype( literal_impl_.len_ ) size() const noexcept { return literal_impl_.len_; }
+  consteval char_cptr get() const noexcept { return literal_impl_.str_; }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
