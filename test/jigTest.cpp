@@ -34,6 +34,13 @@ BOOST_AUTO_TEST_CASE( test_meta_func_ArraySize ) {
 BOOST_AUTO_TEST_CASE( test_meta_func_Length ) {
   constexpr char const option_str[] = "directory";
   static_assert( jig::STRING::Length( option_str ) == 9, "jig::OPTION::STRING::Length( option_list[0] ) != 9" );
+
+  STATIC_CONSTEXPR char const str[] = "directory";
+
+  struct SendString {
+    constexpr char const * operator()() { return str; }
+  };
+  static_assert( jig::STRING::Length<SendString>() == 9 );
 }
 
 BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
