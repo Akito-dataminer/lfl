@@ -296,3 +296,25 @@ BOOST_AUTO_TEST_CASE( test_output_stream ) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( test_jig_iterator )
+
+BOOST_AUTO_TEST_CASE( test_requires ) {
+  using namespace jig::STRING;
+
+  static_assert( std::input_or_output_iterator<ExcludeNULLLiteralImpl<char, 1>::iterator> );
+  static_assert( std::contiguous_iterator<ExcludeNULLLiteralImpl<char, 2>::iterator> );
+}
+
+BOOST_AUTO_TEST_CASE( test_iterator ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+
+  std::cout << literal << std::endl;
+
+  auto begin = literal.begin();
+  BOOST_CHECK( *begin == 'd' );
+}
+
+BOOST_AUTO_TEST_SUITE_END()

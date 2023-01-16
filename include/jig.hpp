@@ -110,6 +110,9 @@ struct ExcludeNULLLiteralImpl {
   using const_pointer = CharT const *;
   using reference = CharT &;
   using const_reference = CharT const &;
+  using iterator = value_type *;
+  using const_iterator = value_type const *;
+  using difference_type = std::ptrdiff_t;
 
   explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) { std::copy_n( literal, N, str_ ); }
 
@@ -118,6 +121,14 @@ struct ExcludeNULLLiteralImpl {
 
   value_type str_[N];
   STATIC_CONSTEXPR decltype( N ) len_ = N;
+
+  constexpr const_pointer get() const noexcept { return str_; }
+  consteval size_type size() const noexcept { return len_; }
+
+  constexpr value_type operator[] ( size_type index ) const noexcept { return str_[index]; }
+
+  constexpr iterator makeIterator ( size_type const index ) noexcept { return ( str_ + index ); }
+  constexpr const_iterator makeConstIterator ( size_type const index ) const noexcept { return ( str_ + index ); }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
@@ -128,6 +139,8 @@ ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N
 // というよりも、コンパイル時に要素数も分かるから必要ない。
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal {
+  using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
+
   explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : literal_impl_( string_literal, std::make_index_sequence<N>() ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
@@ -135,10 +148,13 @@ struct Literal {
   Literal<CharT, N> ( Literal<CharT, N> && ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
-  ExcludeNULLLiteralImpl<CharT, N> literal_impl_;
+  impl_type literal_impl_;
 
   consteval decltype( literal_impl_.len_ ) size() const noexcept { return literal_impl_.len_; }
   constexpr char_cptr get() const noexcept { return literal_impl_.str_; }
+
+  constexpr typename impl_type::iterator begin() noexcept { return literal_impl_.makeIterator( 0 ); }
+  constexpr typename impl_type::const_iterator cbegin() const noexcept { return literal_impl_.makeConstIterator( 0 ); }
 };
 
 template<typename CharT, size_type N>
