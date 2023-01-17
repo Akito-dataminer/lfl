@@ -34,6 +34,26 @@ BOOST_AUTO_TEST_CASE( test_meta_func_ArraySize ) {
 BOOST_AUTO_TEST_CASE( test_meta_func_Length ) {
   constexpr char const option_str[] = "directory";
   static_assert( jig::STRING::Length( option_str ) == 9, "jig::OPTION::STRING::Length( option_list[0] ) != 9" );
+
+  STATIC_CONSTEXPR char const str[] = "directory";
+
+  struct SendString {
+    constexpr char const * operator()() { return str; }
+  };
+  static_assert( jig::STRING::Length<SendString>() == 9 );
+}
+
+BOOST_AUTO_TEST_CASE( test_make_literal_func ) {
+  using namespace jig::STRING;
+  STATIC_CONSTEXPR char const str[] = "directory";
+
+  struct SendString {
+    constexpr char const * operator()() { return str; }
+  };
+
+  constexpr auto literal = MakeString<SendString>();
+  static_assert( literal.size() == 9 );
+  static_assert( literal.get()[0] == 'd' );
 }
 
 BOOST_AUTO_TEST_CASE( test_meta_func_IsSameN ) {
@@ -266,13 +286,72 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   BOOST_CHECK( index_typo == 2 );
 }
 
+BOOST_AUTO_TEST_CASE( test_operator_lt ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal( "directory" );
+
+  BOOST_CHECK( ( literal < Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal < Literal( "eirectory" ) ) == true );
+  BOOST_CHECK( ( literal < "directory" ) == false );
+  BOOST_CHECK( ( literal < "eirectory" ) == true );
+  BOOST_CHECK( ( "directory" < literal ) == false );
+  BOOST_CHECK( ( "directory" < Literal( "eirectory" ) ) == false );
+}
+
+BOOST_AUTO_TEST_CASE( test_operator_eq ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal( "directory" );
+
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == true );
+  BOOST_CHECK( ( literal == Literal( "eirectory" ) ) == false );
+}
+
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
   using namespace jig;
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal( "directory" );
 
   std::cout << literal << std::endl;
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( test_jig_iterator )
+
+BOOST_AUTO_TEST_CASE( test_requires ) {
+  using namespace jig::STRING;
+
+  static_assert( std::input_or_output_iterator<ExcludeNULLLiteralImpl<char, 1>::iterator> );
+  static_assert( std::contiguous_iterator<ExcludeNULLLiteralImpl<char, 2>::iterator> );
+}
+
+BOOST_AUTO_TEST_CASE( test_begin ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+  BOOST_CHECK( literal == Literal( "directory" ) );
+
+  auto iter = literal.begin();
+  BOOST_CHECK( *iter == 'd' );
+
+  ++iter;
+  BOOST_CHECK( *iter == 'i' );
+
+  *iter = 'a';
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal == Literal( "darectory" ) ) == true );
+}
+
+BOOST_AUTO_TEST_CASE( test_end ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+  auto iter = literal.end();
+  --iter;
+  BOOST_CHECK( *iter == 'y' );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
