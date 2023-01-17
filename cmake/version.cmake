@@ -1,4 +1,4 @@
-set( LICENSE_HOLDER "Akito Matsumoto" )
+set( LICENSE_HOLDER "Akito-Dataminer" )
 
 if( EXISTS "${CMAKE_SOURCE_DIR}/.git" )
   find_package(Git)
