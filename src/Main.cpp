@@ -4,6 +4,7 @@
 * Main.cpp
 *****************************************/
 
+#include "version.h"
 #include "Util/Comparable.hpp"
 #include "jig.hpp"
 
@@ -21,27 +22,15 @@ constexpr char DELIMITER = '\\';
 constexpr char OPTION_SPECIFIER[] = "--";
 constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
 
-class Usage {
-public:
-  Usage();
-  ~Usage();
+namespace message {
 
-  void display( std::ostream & ost ) { ost << messages_ << std::endl; }
-private:
-  std::string messages_;
-};
+STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
+STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.\ndefault of directory is current directory.\n\nDon't support specification of multiple directories yet.\n" );
 
-Usage::Usage()
-: messages_( "" ) {
-  messages_ += "Usage: lfl [directory]\n";
-  messages_ += "Output one name of the latest updated file in specified directory.\n";
-  messages_ += "default of directory is current directory.\n";
-  messages_ += "\n";
-  messages_ += "Don't support specification of multiple directories yet.\n";
-}
+template<jig::STRING::Literal MESSAGE, typename CharT, typename Traits>
+constexpr void Display( std::basic_ostream<CharT, Traits> & ost ) { ost << MESSAGE; }
 
-Usage::~Usage() {
-}
+} // message
 
 enum class PathTag {
   ARG,
@@ -124,9 +113,9 @@ public:
   CmdOption( char const *, char const * );
   ~CmdOption();
 
-  std::string const & getKey() const noexcept { return key_; }
-  std::string const & getValue() const noexcept { return value_; }
-  bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
+  constexpr std::string const & getKey() const noexcept { return key_; }
+  constexpr std::string const & getValue() const noexcept { return value_; }
+  constexpr bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
 private:
   std::string key_;
   std::string value_;
@@ -188,11 +177,11 @@ public:
   CmdLine( int const, char const * [] );
   ~CmdLine();
 
-  CmdOption getOption( int const index ) const noexcept { return options_[index]; }
-  int argNum() const noexcept { return argument_num_; }
+  constexpr CmdOption const & getOption( int const index ) const noexcept { return options_[index]; }
+  constexpr int argNum() const noexcept { return argument_num_; }
   std::vector<std::string> optionList( std::string const & );
 
-  bool isThereHelp() const noexcept;
+  bool isThere( char const * ) const noexcept;
 private:
   std::vector<CmdOption> options_;
   int argument_num_;
@@ -236,12 +225,9 @@ std::vector<std::string> CmdLine::optionList( std::string const & key ) {
   return option_list;
 }
 
-bool CmdLine::isThereHelp() const noexcept {
-  // std::cerr << "options_.size(): " << options_.size() << std::endl;
-
+bool CmdLine::isThere( char const * option ) const noexcept {
   for ( auto itr : options_ ) {
-    // std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
-    if ( itr.getKey() == std::string( "help" ) ) { return true; }
+    if ( std::strncmp( itr.getKey().c_str(), option, itr.getKey().size() ) == 0 ) { return true; }
   }
 
   return false;
@@ -311,9 +297,15 @@ int main( int argc, char const * argv [] ) {
   try {
     CmdLine cmd_line( argc, argv );
 
-    // std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
-    if ( cmd_line.isThereHelp() == true ) {
-      Usage().display( std::cout );
+    if ( cmd_line.isThere( "help" ) == true ) {
+      using namespace message;
+      Display<HELP>( std::cout );
+      return 0;
+    }
+
+    if ( cmd_line.isThere( "version" ) == true ) {
+      using namespace message;
+      Display<VERSION>( std::cout );
       return 0;
     }
 
@@ -330,9 +322,10 @@ int main( int argc, char const * argv [] ) {
       }
     }
   } catch ( std::invalid_argument const & e ) {
+    using namespace message;
     std::cerr << e.what() << std::endl;
 
-    Usage().display( std::cerr );
+    Display<HELP>( std::cerr );
 
     for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
 
