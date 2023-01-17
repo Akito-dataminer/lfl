@@ -41,6 +41,8 @@
 
 #pragma once
 
+#include "Util/Comparable.hpp"
+
 #include <string>
 #include <cstring>
 #include <utility>
@@ -135,6 +137,18 @@ protected:
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>
 ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N>() ) -> ExcludeNULLLiteralImpl<CharT, N - 1>;
+
+template<typename CharT, size_type N1, size_type N2>
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
+  if constexpr ( N1 != N2 ) {
+    return false;
+  } else {
+    for ( size_t i = 0; i < N1; ++i ) {
+      if ( literal1.str_[i] < literal2.str_[i] ) { return true; }
+    }
+    return false;
+  }
+}
 
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。

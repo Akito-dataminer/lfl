@@ -286,6 +286,15 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   BOOST_CHECK( index_typo == 2 );
 }
 
+BOOST_AUTO_TEST_CASE( test_operator_lt ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+
+  BOOST_CHECK( literal < Literal( "directory" ) == false );
+  BOOST_CHECK( literal < Literal( "eirectory" ) == true );
+}
+
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
   using namespace jig;
   using namespace jig::STRING;
@@ -324,6 +333,10 @@ BOOST_AUTO_TEST_CASE( test_begin ) {
 BOOST_AUTO_TEST_CASE( test_end ) {
   using namespace jig::STRING;
 
+  Literal literal( "directory" );
+  auto iter = literal.end();
+  --iter;
+  BOOST_CHECK( *iter == 'y' );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

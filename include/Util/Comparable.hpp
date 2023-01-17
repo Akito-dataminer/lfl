@@ -38,7 +38,7 @@ class CompDef {
 public:
   using const_reference = HasLT const &;
 
-  CompDef() {
+  consteval CompDef() {
     // <演算子が定義されていなければコンパイルエラーを表示する
     static_assert(std::is_same<typename has_less_than<HasLT, HasLT>::type, std::true_type>::value, "operator < is NOT defined");
 
@@ -46,13 +46,13 @@ public:
     static_assert(std::is_same<decltype( std::declval<HasLT>() < std::declval<HasLT>() ), bool>::value, "operator < does NOT return bool value");
   }
 
-  friend bool operator > ( const_reference c1, const_reference c2 ) noexcept { return( c2 < c1 ); }
+  friend constexpr bool operator > ( const_reference c1, const_reference c2 ) noexcept { return( c2 < c1 ); }
 
-  friend bool operator <= ( const_reference c1, const_reference c2 ) noexcept { return( !( c2 < c1 ) ); }
-  friend bool operator >= ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) ); }
+  friend constexpr bool operator <= ( const_reference c1, const_reference c2 ) noexcept { return( !( c2 < c1 ) ); }
+  friend constexpr bool operator >= ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) ); }
 
-  friend bool operator == ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) && !( c2 < c1 ) ); }
-  // friend bool operator != ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 == c2 ) ); }
+  friend constexpr bool operator == ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) && !( c2 < c1 ) ); }
+  // friend constexpr bool operator != ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 == c2 ) ); }
 };
 
 }; // COMPARABLE
