@@ -113,9 +113,9 @@ public:
   CmdOption( char const *, char const * );
   ~CmdOption();
 
-  std::string const & getKey() const noexcept { return key_; }
-  std::string const & getValue() const noexcept { return value_; }
-  bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
+  constexpr std::string const & getKey() const noexcept { return key_; }
+  constexpr std::string const & getValue() const noexcept { return value_; }
+  constexpr bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
 private:
   std::string key_;
   std::string value_;
