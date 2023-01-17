@@ -306,15 +306,24 @@ BOOST_AUTO_TEST_CASE( test_requires ) {
   static_assert( std::contiguous_iterator<ExcludeNULLLiteralImpl<char, 2>::iterator> );
 }
 
-BOOST_AUTO_TEST_CASE( test_iterator ) {
+BOOST_AUTO_TEST_CASE( test_begin ) {
   using namespace jig::STRING;
 
   Literal literal( "directory" );
 
-  std::cout << literal << std::endl;
+  auto iter = literal.begin();
+  BOOST_CHECK( *iter == 'd' );
 
-  auto begin = literal.begin();
-  BOOST_CHECK( *begin == 'd' );
+  ++iter;
+  BOOST_CHECK( *iter == 'i' );
+
+  *iter = 'a';
+  // IsSameN( literal, "directory", 9 );
+}
+
+BOOST_AUTO_TEST_CASE( test_end ) {
+  using namespace jig::STRING;
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

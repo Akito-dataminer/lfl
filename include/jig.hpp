@@ -154,7 +154,9 @@ struct Literal {
   constexpr char_cptr get() const noexcept { return literal_impl_.str_; }
 
   constexpr typename impl_type::iterator begin() noexcept { return literal_impl_.makeIterator( 0 ); }
+  constexpr typename impl_type::iterator end() noexcept { return literal_impl_.makeIterator( N ); }
   constexpr typename impl_type::const_iterator cbegin() const noexcept { return literal_impl_.makeConstIterator( 0 ); }
+  constexpr typename impl_type::const_iterator cend() const noexcept { return literal_impl_.makeConstIterator( N ); }
 };
 
 template<typename CharT, size_type N>
