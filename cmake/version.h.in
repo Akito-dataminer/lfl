@@ -2,4 +2,4 @@
 #define TOOL_NAME            "${TOOL_NAME}"
 
 #define VERSION_STRING  \
-    "${TOOL_NAME} ${TAG_AND_BUILD_STRING}\nCopyright(C) 2022 ${LICENSE_HOLDER} all rights reserved."
+    "${TOOL_NAME} ${TAG_AND_BUILD_STRING}\nCopyright(C) 2022 ${LICENSE_HOLDER} all rights reserved.\n"
