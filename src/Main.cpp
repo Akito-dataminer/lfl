@@ -24,7 +24,7 @@ constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the 
 
 namespace message {
 
-// STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
+STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
 STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.\ndefault of directory is current directory.\n\nDon't support specification of multiple directories yet.\n" );
 
 template<jig::STRING::Literal MESSAGE, typename CharT, typename Traits>
@@ -181,7 +181,7 @@ public:
   int argNum() const noexcept { return argument_num_; }
   std::vector<std::string> optionList( std::string const & );
 
-  bool isThereHelp() const noexcept;
+  bool isThere( char const * ) const noexcept;
 private:
   std::vector<CmdOption> options_;
   int argument_num_;
@@ -225,12 +225,12 @@ std::vector<std::string> CmdLine::optionList( std::string const & key ) {
   return option_list;
 }
 
-bool CmdLine::isThereHelp() const noexcept {
+bool CmdLine::isThere( char const * option ) const noexcept {
   // std::cerr << "options_.size(): " << options_.size() << std::endl;
 
   for ( auto itr : options_ ) {
     // std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
-    if ( itr.getKey() == std::string( "help" ) ) { return true; }
+    if ( itr.getKey() == std::string( option ) ) { return true; }
   }
 
   return false;
@@ -300,10 +300,15 @@ int main( int argc, char const * argv [] ) {
   try {
     CmdLine cmd_line( argc, argv );
 
-    // std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
-    if ( cmd_line.isThereHelp() == true ) {
+    if ( cmd_line.isThere( "help" ) == true ) {
       using namespace message;
       Display<HELP>( std::cout );
+      return 0;
+    }
+
+    if ( cmd_line.isThere( "version" ) == true ) {
+      using namespace message;
+      Display<VERSION>( std::cout );
       return 0;
     }
 
