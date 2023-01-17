@@ -286,13 +286,72 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
   BOOST_CHECK( index_typo == 2 );
 }
 
+BOOST_AUTO_TEST_CASE( test_operator_lt ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal( "directory" );
+
+  BOOST_CHECK( ( literal < Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal < Literal( "eirectory" ) ) == true );
+  BOOST_CHECK( ( literal < "directory" ) == false );
+  BOOST_CHECK( ( literal < "eirectory" ) == true );
+  BOOST_CHECK( ( "directory" < literal ) == false );
+  BOOST_CHECK( ( "directory" < Literal( "eirectory" ) ) == false );
+}
+
+BOOST_AUTO_TEST_CASE( test_operator_eq ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal( "directory" );
+
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == true );
+  BOOST_CHECK( ( literal == Literal( "eirectory" ) ) == false );
+}
+
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
   using namespace jig;
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal( "directory" );
 
   std::cout << literal << std::endl;
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( test_jig_iterator )
+
+BOOST_AUTO_TEST_CASE( test_requires ) {
+  using namespace jig::STRING;
+
+  static_assert( std::input_or_output_iterator<ExcludeNULLLiteralImpl<char, 1>::iterator> );
+  static_assert( std::contiguous_iterator<ExcludeNULLLiteralImpl<char, 2>::iterator> );
+}
+
+BOOST_AUTO_TEST_CASE( test_begin ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+  BOOST_CHECK( literal == Literal( "directory" ) );
+
+  auto iter = literal.begin();
+  BOOST_CHECK( *iter == 'd' );
+
+  ++iter;
+  BOOST_CHECK( *iter == 'i' );
+
+  *iter = 'a';
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal == Literal( "darectory" ) ) == true );
+}
+
+BOOST_AUTO_TEST_CASE( test_end ) {
+  using namespace jig::STRING;
+
+  Literal literal( "directory" );
+  auto iter = literal.end();
+  --iter;
+  BOOST_CHECK( *iter == 'y' );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
