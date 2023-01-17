@@ -289,17 +289,21 @@ BOOST_AUTO_TEST_CASE( test_OptionListMatchIndex ) {
 BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal( "directory" );
 
-  BOOST_CHECK( literal < Literal( "directory" ) == false );
-  BOOST_CHECK( literal < Literal( "eirectory" ) == true );
+  BOOST_CHECK( ( literal < Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal < Literal( "eirectory" ) ) == true );
+  BOOST_CHECK( ( literal < "directory" ) == false );
+  BOOST_CHECK( ( literal < "eirectory" ) == true );
+  BOOST_CHECK( ( "directory" < literal ) == false );
+  BOOST_CHECK( ( "directory" < Literal( "eirectory" ) ) == false );
 }
 
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
   using namespace jig;
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal( "directory" );
 
   std::cout << literal << std::endl;
 }

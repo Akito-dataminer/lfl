@@ -138,6 +138,9 @@ protected:
 template<typename CharT, size_type N>
 ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N>() ) -> ExcludeNULLLiteralImpl<CharT, N - 1>;
 
+////////////////////
+// operator<
+////////////////////
 template<typename CharT, size_type N1, size_type N2>
 constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
   if constexpr ( N1 != N2 ) {
@@ -149,6 +152,21 @@ constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, E
     return false;
   }
 }
+
+template<typename CharT, size_type N1, size_type N2>
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) {
+  if constexpr ( N1 != ( N2 - 1 ) ) {
+    return false;
+  } else {
+    for ( size_t i = 0; i < N1; ++i ) {
+      if ( literal1.str_[i] < literal2[i] ) { return true; }
+    }
+    return false;
+  }
+}
+
+template<typename CharT, size_type N1, size_type N2>
+constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) { return literal2 < literal1; }
 
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。
