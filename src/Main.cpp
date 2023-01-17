@@ -226,11 +226,8 @@ std::vector<std::string> CmdLine::optionList( std::string const & key ) {
 }
 
 bool CmdLine::isThere( char const * option ) const noexcept {
-  // std::cerr << "options_.size(): " << options_.size() << std::endl;
-
   for ( auto itr : options_ ) {
-    // std::cerr << "itr.getKey(): " << itr.getKey() << std::endl;
-    if ( itr.getKey() == std::string( option ) ) { return true; }
+    if ( std::strncmp( itr.getKey().c_str(), option, itr.getKey().size() ) == 0 ) { return true; }
   }
 
   return false;
