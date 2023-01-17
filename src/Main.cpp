@@ -4,6 +4,7 @@
 * Main.cpp
 *****************************************/
 
+#include "version.h"
 #include "Util/Comparable.hpp"
 #include "jig.hpp"
 
@@ -21,27 +22,15 @@ constexpr char DELIMITER = '\\';
 constexpr char OPTION_SPECIFIER[] = "--";
 constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
 
-class Usage {
-public:
-  Usage();
-  ~Usage();
+namespace message {
 
-  void display( std::ostream & ost ) { ost << messages_ << std::endl; }
-private:
-  std::string messages_;
-};
+// STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
+STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.\ndefault of directory is current directory.\n\nDon't support specification of multiple directories yet.\n" );
 
-Usage::Usage()
-: messages_( "" ) {
-  messages_ += "Usage: lfl [directory]\n";
-  messages_ += "Output one name of the latest updated file in specified directory.\n";
-  messages_ += "default of directory is current directory.\n";
-  messages_ += "\n";
-  messages_ += "Don't support specification of multiple directories yet.\n";
-}
+template<jig::STRING::Literal MESSAGE, typename CharT, typename Traits>
+constexpr void Display( std::basic_ostream<CharT, Traits> & ost ) { ost << MESSAGE; }
 
-Usage::~Usage() {
-}
+} // message
 
 enum class PathTag {
   ARG,
@@ -313,7 +302,8 @@ int main( int argc, char const * argv [] ) {
 
     // std::cerr << "cmd_line.argNum(): " << cmd_line.argNum() << std::endl;
     if ( cmd_line.isThereHelp() == true ) {
-      Usage().display( std::cout );
+      using namespace message;
+      Display<HELP>( std::cout );
       return 0;
     }
 
@@ -330,9 +320,10 @@ int main( int argc, char const * argv [] ) {
       }
     }
   } catch ( std::invalid_argument const & e ) {
+    using namespace message;
     std::cerr << e.what() << std::endl;
 
-    Usage().display( std::cerr );
+    Display<HELP>( std::cerr );
 
     for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
 
