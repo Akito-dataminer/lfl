@@ -177,7 +177,7 @@ public:
   CmdLine( int const, char const * [] );
   ~CmdLine();
 
-  CmdOption getOption( int const index ) const noexcept { return options_[index]; }
+  CmdOption const & getOption( int const index ) const noexcept { return options_[index]; }
   int argNum() const noexcept { return argument_num_; }
   std::vector<std::string> optionList( std::string const & );
 
