@@ -127,6 +127,7 @@ struct ExcludeNULLLiteralImpl {
 
   constexpr value_type operator[] ( size_type index ) const noexcept { return str_[index]; }
 
+protected:
   constexpr iterator makeIterator ( size_type const index ) noexcept { return ( str_ + index ); }
   constexpr const_iterator makeConstIterator ( size_type const index ) const noexcept { return ( str_ + index ); }
 };
@@ -138,25 +139,20 @@ ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
-struct Literal {
+struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
 
-  explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : literal_impl_( string_literal, std::make_index_sequence<N>() ) {}
+  explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal, std::make_index_sequence<N>() ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> ( Literal<CharT, N> && ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
-  impl_type literal_impl_;
-
-  consteval decltype( literal_impl_.len_ ) size() const noexcept { return literal_impl_.len_; }
-  constexpr char_cptr get() const noexcept { return literal_impl_.str_; }
-
-  constexpr typename impl_type::iterator begin() noexcept { return literal_impl_.makeIterator( 0 ); }
-  constexpr typename impl_type::iterator end() noexcept { return literal_impl_.makeIterator( N ); }
-  constexpr typename impl_type::const_iterator cbegin() const noexcept { return literal_impl_.makeConstIterator( 0 ); }
-  constexpr typename impl_type::const_iterator cend() const noexcept { return literal_impl_.makeConstIterator( N ); }
+  constexpr typename impl_type::iterator begin() noexcept { return impl_type::makeIterator( 0 ); }
+  constexpr typename impl_type::iterator end() noexcept { return impl_type::makeIterator( N ); }
+  constexpr typename impl_type::const_iterator cbegin() const noexcept { return impl_type::makeConstIterator( 0 ); }
+  constexpr typename impl_type::const_iterator cend() const noexcept { return impl_type::makeConstIterator( N ); }
 };
 
 template<typename CharT, size_type N>
@@ -166,13 +162,9 @@ inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostr
 
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
-struct Literal<CharT const *, N, NPTR> {
-  explicit consteval Literal( CharT const * string_literal_p ) : literal_impl_( string_literal_p, std::make_index_sequence<N>() ) {}
-
-  ExcludeNULLLiteralImpl<CharT, N> literal_impl_;
-
-  consteval decltype( literal_impl_.len_ ) size() const noexcept { return literal_impl_.len_; }
-  consteval char_cptr get() const noexcept { return literal_impl_.str_; }
+struct Literal<CharT const *, N, NPTR> : public ExcludeNULLLiteralImpl<CharT, N> {
+  using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
+  explicit consteval Literal( CharT const * string_literal_p ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal_p, std::make_index_sequence<N>() ) {}
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
