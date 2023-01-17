@@ -299,6 +299,15 @@ BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   BOOST_CHECK( ( "directory" < Literal( "eirectory" ) ) == false );
 }
 
+BOOST_AUTO_TEST_CASE( test_operator_eq ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal( "directory" );
+
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == true );
+  BOOST_CHECK( ( literal == Literal( "eirectory" ) ) == false );
+}
+
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
   using namespace jig;
   using namespace jig::STRING;
@@ -323,6 +332,7 @@ BOOST_AUTO_TEST_CASE( test_begin ) {
   using namespace jig::STRING;
 
   Literal literal( "directory" );
+  BOOST_CHECK( literal == Literal( "directory" ) );
 
   auto iter = literal.begin();
   BOOST_CHECK( *iter == 'd' );
@@ -331,7 +341,8 @@ BOOST_AUTO_TEST_CASE( test_begin ) {
   BOOST_CHECK( *iter == 'i' );
 
   *iter = 'a';
-  // IsSameN( literal, "directory", 9 );
+  BOOST_CHECK( ( literal == Literal( "directory" ) ) == false );
+  BOOST_CHECK( ( literal == Literal( "darectory" ) ) == true );
 }
 
 BOOST_AUTO_TEST_CASE( test_end ) {

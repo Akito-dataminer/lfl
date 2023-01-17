@@ -107,7 +107,7 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
 
 // N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
 template<typename CharT, size_type N>
-struct ExcludeNULLLiteralImpl {
+struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLiteralImpl<CharT, N>>{
   using value_type = CharT;
   using const_pointer = CharT const *;
   using reference = CharT &;
