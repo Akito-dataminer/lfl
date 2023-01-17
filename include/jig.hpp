@@ -1,6 +1,10 @@
 /*****************************
  * lfl/Argument
  *
+ * Copyright (c) 2022 Akito-Dataminer
+ * Released under the MIT license.
+ * https://github.com/Akito-dataminer/lfl/blob/main/LICENSE.md
+ *
  * コマンドは、他のコマンドと連携することでより大きな目的のために働く。
  *
  * 複数のコマンドが使われているのであれば、一つのバッチファイルや一つのシェルスクリプトファイル、一行で書いたシェルスクリプトですら、極めて繊細な制御があって初めて成り立つ有機体なのだ。
