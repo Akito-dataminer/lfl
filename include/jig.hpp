@@ -120,12 +120,12 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   using const_iterator = value_type const *;
   using difference_type = std::ptrdiff_t;
 
-  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) { std::copy_n( literal, N, str_ ); }
+  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) { std::copy_n( literal, N, str_ ); str_[N] = '\0'; }
 
   template<size_type... INDICES>
-  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> ) : str_{ literal_p[INDICES] ... } {}
+  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> ) : str_{ literal_p[INDICES] ... } { str_[N] = '\0'; }
 
-  value_type str_[N];
+  value_type str_[N + 1];
   STATIC_CONSTEXPR decltype( N ) len_ = N;
 
   constexpr const_pointer get() const noexcept { return str_; }
