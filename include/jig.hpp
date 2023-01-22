@@ -122,6 +122,8 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   using const_iterator = value_type const *;
   using difference_type = std::ptrdiff_t;
 
+  explicit consteval ExcludeNULLLiteralImpl() : str_{ '\0' }, len_( 0 ) {}
+
   explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) : len_( N ) { std::copy_n( literal, N, str_ ); }
 
   template<size_type... INDICES>
@@ -188,10 +190,11 @@ template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
 
+  explicit consteval Literal() : ExcludeNULLLiteralImpl<CharT, N>() {}
   explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal, std::make_index_sequence<N>() ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
-  Literal<CharT, N> & operator=( Literal<CharT, N>  const & ) = default;
+  Literal<CharT, N> & operator=( Literal<CharT, N> const & ) = default;
   Literal<CharT, N> ( Literal<CharT, N> && ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
