@@ -149,30 +149,37 @@ ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N
 ////////////////////
 template<typename CharT, size_type N1, size_type N2>
 constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
-  if constexpr ( N1 != N2 ) {
-    return false;
-  } else {
-    for ( size_t i = 0; i < N1; ++i ) {
-      if ( literal1.str_[i] < literal2.str_[i] ) { return true; }
-    }
-    return false;
+  auto len1 = literal1.len_;
+  auto len2 = literal2.len_;
+
+  for ( size_type index = 0; index < std::min( len1, len2 ); ++index ) {
+    if ( literal1[index] < literal2[index] ) { return true; }
   }
+
+  return ( len1 < len2 );
 }
 
 template<typename CharT, size_type N1, size_type N2>
 constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) {
-  if constexpr ( N1 != ( N2 - 1 ) ) {
-    return false;
-  } else {
-    for ( size_t i = 0; i < N1; ++i ) {
-      if ( literal1.str_[i] < literal2[i] ) { return true; }
-    }
-    return false;
+  auto len1 = literal1.len_;
+
+  for ( size_t index = 0; index < std::min( len1, N2 ); ++index ) {
+    if ( literal1[index] < literal2[index] ) { return true; }
   }
+
+  return ( len1 < ( N2 - 1 ) );
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) { return literal2 < literal1; }
+constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
+  auto len2 = literal2.len_;
+
+  for ( size_t index = 0; index < std::min( N1, len2 ) ; ++index ) {
+    if ( literal1[index] <  literal2[index] ) { return true; }
+  }
+
+  return ( ( N1 - 1 ) < len2 );
+}
 
 // 最後の'\0'は含めたくない。
 // というよりも、コンパイル時に要素数も分かるから必要ない。

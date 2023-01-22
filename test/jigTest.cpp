@@ -121,23 +121,48 @@ BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
 BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   using namespace jig::STRING;
 
-  STATIC_CONSTEXPR Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal1( "directory" );
+  STATIC_CONSTEXPR Literal literal2( "directory" );
+  STATIC_CONSTEXPR Literal literal3( "eirectory" );
 
-  BOOST_CHECK( ( literal < Literal( "directory" ) ) == false );
-  BOOST_CHECK( ( literal < Literal( "eirectory" ) ) == true );
-  BOOST_CHECK( ( literal < "directory" ) == false );
-  BOOST_CHECK( ( literal < "eirectory" ) == true );
-  BOOST_CHECK( ( "directory" < literal ) == false );
-  BOOST_CHECK( ( "directory" < Literal( "eirectory" ) ) == false );
+  static_assert( ( literal1 < literal2 ) == false );
+  static_assert( ( literal1 < literal3 ) == true );
+  static_assert( ( literal3 < literal1 ) == false );
+
+  static_assert( ( literal1 < "directory" ) == false );
+  static_assert( ( "directory" < literal1 ) == false );
+  static_assert( ( literal1 < "eirectory" ) == true );
+  static_assert( ( "eirectory" < literal1 ) == false );
+
+  static_assert( ( literal3 < "directory" ) == false );
+  static_assert( ( "directory" < literal3 ) == true );
+  static_assert( ( literal3 < "eirectory" ) == false );
+  static_assert( ( "eirectory" < literal3 ) == false );
+
+  BOOST_CHECK( ( literal1 < literal2 ) == false );
+  BOOST_CHECK( ( literal1 < literal3 ) == true );
+  BOOST_CHECK( ( literal3 < literal1 ) == false );
+
+  BOOST_CHECK( ( literal1 < "directory" ) == false );
+  BOOST_CHECK( ( "directory" < literal1 ) == false );
+  BOOST_CHECK( ( literal1 < "eirectory" ) == true );
+  BOOST_CHECK( ( "eirectory" < literal1 ) == false );
+
+  BOOST_CHECK( ( literal3 < "directory" ) == false );
+  BOOST_CHECK( ( "directory" < literal3 ) == true );
+  BOOST_CHECK( ( literal3 < "eirectory" ) == false );
+  BOOST_CHECK( ( "eirectory" < literal3 ) == false );
 }
 
 BOOST_AUTO_TEST_CASE( test_operator_eq ) {
   using namespace jig::STRING;
 
-  STATIC_CONSTEXPR Literal literal( "directory" );
+  STATIC_CONSTEXPR Literal literal1( "directory" );
+  STATIC_CONSTEXPR Literal literal2( "directory" );
+  STATIC_CONSTEXPR Literal literal3( "eirectory" );
 
-  BOOST_CHECK( ( literal == Literal( "directory" ) ) == true );
-  BOOST_CHECK( ( literal == Literal( "eirectory" ) ) == false );
+  BOOST_CHECK( ( literal1 == literal2 ) == true );
+  BOOST_CHECK( ( literal1 == literal3 ) == false );
 }
 
 BOOST_AUTO_TEST_CASE( test_output_stream ) {
