@@ -152,7 +152,7 @@ ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N
 // operator<
 ////////////////////
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) noexcept {
   auto len1 = literal1.len_;
   auto len2 = literal2.len_;
 
@@ -164,7 +164,7 @@ constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, E
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) {
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) noexcept {
   auto len1 = literal1.len_;
 
   for ( size_t index = 0; index < std::min( len1, N2 ); ++index ) {
@@ -175,7 +175,7 @@ constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, C
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
+constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) noexcept {
   auto len2 = literal2.len_;
 
   for ( size_t index = 0; index < std::min( N1, len2 ) ; ++index ) {
