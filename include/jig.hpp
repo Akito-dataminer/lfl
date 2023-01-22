@@ -131,7 +131,8 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   constexpr const_pointer get() const noexcept { return str_; }
   consteval size_type size() const noexcept { return len_; }
 
-  constexpr value_type operator[] ( size_type index ) const noexcept { return str_[index]; }
+  constexpr reference operator[] ( size_type index ) noexcept { return str_[index]; }
+  constexpr const_reference operator[] ( size_type index ) const noexcept { return str_[index]; }
 
 protected:
   constexpr iterator makeIterator ( size_type const index ) noexcept { return ( str_ + index ); }
