@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE( test_output_stream ) {
 
   STATIC_CONSTEXPR Literal literal( "directory" );
 
-  std::cout << literal << std::endl;
+  std::cout << "literal(test_output_stream): " << literal << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -220,7 +220,6 @@ BOOST_AUTO_TEST_SUITE_END()
 #include "jig/option.hpp"
 
 BOOST_AUTO_TEST_SUITE( test_jig_option )
-
 
 BOOST_AUTO_TEST_CASE( constexpr_func_GetOptionStr ) {
   using namespace jig;
