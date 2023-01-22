@@ -6,7 +6,8 @@
 
 #include "version.h"
 #include "Util/Comparable.hpp"
-#include "jig.hpp"
+// #include "jig.hpp"
+#include "jig/option.hpp"
 
 // std
 #include <cstring>
