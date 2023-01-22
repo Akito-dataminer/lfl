@@ -109,15 +109,6 @@ BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
   static_assert( literal1.size() == 9 );
 }
 
-BOOST_AUTO_TEST_CASE( test_MakeStringLiteral ) {
-  using namespace jig::STRING;
-
-  STATIC_CONSTEXPR char const option1[] = "directory";
-  constexpr auto literal1 = ToStringLiteral<char, option1>();
-
-  static_assert( literal1.size() == 9 );
-}
-
 BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   using namespace jig::STRING;
 
