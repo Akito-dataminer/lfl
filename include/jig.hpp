@@ -48,6 +48,7 @@
 #include "Util/Comparable.hpp"
 
 #include <string>
+#include <stdexcept>
 #include <cstring>
 #include <utility>
 #include <type_traits>
@@ -135,8 +136,8 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   constexpr const_reference operator[] ( size_type index ) const noexcept { return str_[index]; }
 
 protected:
-  constexpr iterator makeIterator ( size_type const index ) noexcept { return ( str_ + index ); }
-  constexpr const_iterator makeConstIterator ( size_type const index ) const noexcept { return ( str_ + index ); }
+  constexpr iterator makeIterator( size_type const index ) { return ( ( index < ( N + 1 ) ) ? ( str_ + index ) : ( throw std::out_of_range("makeIterator: out of range") ) ); }
+  constexpr const_iterator makeConstIterator( size_type const index ) const { return ( ( index < ( N + 1 ) ) ? ( str_ + index ) : ( throw std::out_of_range("makeConstIterator: out of range") ) ); }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
