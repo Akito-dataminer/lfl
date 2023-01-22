@@ -56,6 +56,7 @@
 #include <ostream>
 
 #define STATIC_CONSTEXPR static constexpr
+#define STATIC_CONSTINIT static constinit
 
 namespace UTIL {
   // template<typename T> constexpr bool false_v = false;

@@ -188,27 +188,28 @@ BOOST_AUTO_TEST_CASE( test_requires ) {
 BOOST_AUTO_TEST_CASE( test_begin ) {
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
-  BOOST_CHECK( literal == Literal( "directory" ) );
+  STATIC_CONSTINIT Literal literal( "directory" );
+  STATIC_CONSTINIT Literal literal_original( "directory" );
+  STATIC_CONSTINIT Literal literal_last( "darectory" );
 
-  auto iter = literal.begin();
-  BOOST_CHECK( *iter == 'd' );
+  auto itr = literal.begin();
+  BOOST_CHECK( *itr == 'd' );
 
-  ++iter;
-  BOOST_CHECK( *iter == 'i' );
+  ++itr;
+  BOOST_CHECK( *itr == 'i' );
 
-  *iter = 'a';
-  BOOST_CHECK( ( literal == Literal( "directory" ) ) == false );
-  BOOST_CHECK( ( literal == Literal( "darectory" ) ) == true );
+  *itr = 'a';
+  BOOST_CHECK( ( literal == literal_original ) == false );
+  BOOST_CHECK( ( literal == literal_last ) == true );
 }
 
 BOOST_AUTO_TEST_CASE( test_end ) {
   using namespace jig::STRING;
 
-  Literal literal( "directory" );
-  auto iter = literal.end();
-  --iter;
-  BOOST_CHECK( *iter == 'y' );
+  STATIC_CONSTINIT Literal literal( "directory" );
+  auto itr = literal.end();
+  --itr;
+  BOOST_CHECK( *itr == 'y' );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
