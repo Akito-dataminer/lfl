@@ -152,6 +152,20 @@ BOOST_AUTO_TEST_CASE( test_operator_eq ) {
   STATIC_CONSTEXPR Literal literal2( "directory" );
   STATIC_CONSTEXPR Literal literal3( "eirectory" );
 
+  static_assert( ( literal1 == literal2 ) == true );
+  static_assert( ( literal1 == literal3 ) == false );
+  static_assert( ( literal3 == literal1 ) == false );
+
+  // static_assert( ( literal1 == "directory" ) == false );
+  // static_assert( ( "directory" == literal1 ) == false );
+  // static_assert( ( literal1 == "eirectory" ) == true );
+  // static_assert( ( "eirectory" == literal1 ) == false );
+
+  // static_assert( ( literal3 == "directory" ) == false );
+  // static_assert( ( "directory" == literal3 ) == true );
+  // static_assert( ( literal3 == "eirectory" ) == false );
+  // static_assert( ( "eirectory" == literal3 ) == false );
+
   BOOST_CHECK( ( literal1 == literal2 ) == true );
   BOOST_CHECK( ( literal1 == literal3 ) == false );
 }

@@ -47,11 +47,20 @@ public:
   }
 
   friend constexpr bool operator > ( const_reference c1, const_reference c2 ) noexcept { return( c2 < c1 ); }
+  template<typename T>
+  friend constexpr bool operator > ( const_reference c1, T c2 ) noexcept { return( c2 < c1 ); }
 
   friend constexpr bool operator <= ( const_reference c1, const_reference c2 ) noexcept { return( !( c2 < c1 ) ); }
+  template<typename T>
+  friend constexpr bool operator <= ( const_reference c1, T c2 ) noexcept { return( !( c2 < c1 ) ); }
+
   friend constexpr bool operator >= ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) ); }
+  template<typename T>
+  friend constexpr bool operator >= ( const_reference c1, T c2 ) noexcept { return( !( c1 < c2 ) ); }
 
   friend constexpr bool operator == ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 < c2 ) && !( c2 < c1 ) ); }
+  template<typename T>
+  friend constexpr bool operator == ( const_reference c1, T c2 ) noexcept { return( !( c1 < c2 ) && !( c2 < c1 ) ); }
   // friend constexpr bool operator != ( const_reference c1, const_reference c2 ) noexcept { return( !( c1 == c2 ) ); }
 };
 
