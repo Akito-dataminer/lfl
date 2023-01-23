@@ -135,9 +135,42 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
 
   constexpr const_pointer get() const noexcept { return str_; }
   constexpr size_type size() const noexcept { return N; }
+  constexpr size_type length() const noexcept { return len_; }
 
   constexpr reference operator[] ( size_type index ) noexcept { return str_[index]; }
   constexpr const_reference operator[] ( size_type index ) const noexcept { return str_[index]; }
+
+  constexpr void append( CharT const one_char ) {
+    if ( ( len_ + 1 ) < N ) {
+      str_[len_] = one_char;
+      ++len_;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
+
+  constexpr void append( CharT const * str ) {
+    size_type len2 = std::strlen(str);
+
+    if ( ( len2 + len_ ) < N ) {
+      for ( size_type i = 0; i < len2; ++i ) { str_[len_ + i] = str[i]; }
+      len_ += len2;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
+
+  template<size_type N2>
+  constexpr void append( ExcludeNULLLiteralImpl<CharT, N2> const & str ) {
+    size_type len2 = str.len_;
+
+    if ( ( len2 + this->len_ ) < N ) {
+      for ( size_type i = 0; i < len2; ++i ) { this->str_[len_ + i] = str.str_[i]; }
+      this->len_ += str.len_;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
 
 protected:
   constexpr iterator makeIterator( size_type const index ) { return ( ( index < ( N + 1 ) ) ? ( str_ + index ) : ( throw std::out_of_range("makeIterator: out of range") ) ); }
@@ -185,8 +218,9 @@ constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImp
   return ( ( N1 - 1 ) < len2 );
 }
 
-// 最後の'\0'は含めたくない。
-// というよりも、コンパイル時に要素数も分かるから必要ない。
+////////////////////
+// Literal
+////////////////////
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
@@ -205,17 +239,48 @@ struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
   constexpr typename impl_type::const_iterator cend() const noexcept { return impl_type::makeConstIterator( impl_type::len_ ); }
 };
 
-template<typename CharT, size_type N>
-inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostream<CharT> & lhs, Literal<CharT, N> const & rhs ) {
-  return lhs << rhs.get();
-}
-
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
 struct Literal<CharT const *, N, NPTR> : public ExcludeNULLLiteralImpl<CharT, N> {
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
   explicit consteval Literal( CharT const * string_literal_p ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal_p, std::make_index_sequence<N>() ) {}
 };
+
+////////////////////
+// operator<<
+////////////////////
+template<typename CharT, size_type N>
+inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostream<CharT> & lhs, Literal<CharT, N> const & rhs ) {
+  return lhs << rhs.get();
+}
+
+////////////////////
+// operator+
+////////////////////
+template<typename CharT, typename T1, typename T2>
+struct AddString {
+public:
+  AddString( T1 const & op1, T2 const & op2 ) : op1_( op1 ), op2_( op2 ) {}
+
+  STATIC_CONSTEXPR size_type len_ = T1::len_ + T2::len_;
+  using type = Literal<CharT, len_>;
+
+  constexpr type operator() () {
+    type return_literal( op1_ );
+
+    return_literal.append( op2_ );
+
+    return return_literal;
+  }
+private:
+  T1 const & op1_;
+  T2 const & op2_;
+};
+
+template<typename CharT, size_type N1, size_type N2>
+constexpr auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+  return AddString( literal1, literal2 );
+}
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>

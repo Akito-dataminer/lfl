@@ -109,6 +109,30 @@ BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
   static_assert( literal1.size() == 9 );
 }
 
+BOOST_AUTO_TEST_CASE( test_append ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTINIT Literal<char, 40> literal;
+  BOOST_CHECK( literal.begin() == literal.end() );
+
+  STATIC_CONSTEXPR Literal literal_append( "directory" );
+
+  literal.append( literal_append );
+  BOOST_CHECK( literal.length() == literal_append.length() );
+  BOOST_CHECK( literal == literal_append );
+
+  literal.append( "cucumber" );
+  STATIC_CONSTINIT Literal literal_test1( "directorycucumber" );
+  BOOST_CHECK( literal.length() == literal_test1.length() );
+  BOOST_CHECK( literal == literal_test1 );
+
+  literal.append( '1' );
+  std::cerr << "literal: " << literal << std::endl;
+  STATIC_CONSTINIT Literal literal_test2( "directorycucumber1" );
+  BOOST_CHECK( literal.length() == literal_test2.length() );
+  BOOST_CHECK( literal == literal_test2 );
+}
+
 BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   using namespace jig::STRING;
 
