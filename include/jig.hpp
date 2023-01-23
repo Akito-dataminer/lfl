@@ -140,6 +140,12 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   constexpr reference operator[] ( size_type index ) noexcept { return str_[index]; }
   constexpr const_reference operator[] ( size_type index ) const noexcept { return str_[index]; }
 
+  template<typename T>
+  constexpr ExcludeNULLLiteralImpl<CharT, N> & operator+= ( T const & literal2 ) {
+    append( literal2 );
+    return *this;
+  }
+
   constexpr void append( CharT const one_char ) {
     if ( ( len_ + 1 ) < N ) {
       str_[len_] = one_char;

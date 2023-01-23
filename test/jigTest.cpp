@@ -169,6 +169,30 @@ BOOST_AUTO_TEST_CASE( test_operator_lt ) {
   BOOST_CHECK( ( "eirectory" < literal3 ) == false );
 }
 
+BOOST_AUTO_TEST_CASE( test_operator_plassign ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTINIT Literal<char, 40> literal;
+  BOOST_CHECK( literal.begin() == literal.end() );
+
+  STATIC_CONSTEXPR Literal literal_append( "directory" );
+
+  literal += literal_append;
+  BOOST_CHECK( literal.length() == literal_append.length() );
+  BOOST_CHECK( literal == literal_append );
+
+  literal += "cucumber";
+  STATIC_CONSTINIT Literal literal_test1( "directorycucumber" );
+  BOOST_CHECK( literal.length() == literal_test1.length() );
+  BOOST_CHECK( literal == literal_test1 );
+
+  literal += '1';
+  std::cerr << "literal: " << literal << std::endl;
+  STATIC_CONSTINIT Literal literal_test2( "directorycucumber1" );
+  BOOST_CHECK( literal.length() == literal_test2.length() );
+  BOOST_CHECK( literal == literal_test2 );
+}
+
 BOOST_AUTO_TEST_CASE( test_operator_eq ) {
   using namespace jig::STRING;
 
