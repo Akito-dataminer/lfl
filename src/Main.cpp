@@ -6,7 +6,6 @@
 
 #include "version.h"
 #include "Util/Comparable.hpp"
-// #include "jig.hpp"
 #include "jig/option.hpp"
 
 // std
@@ -26,7 +25,15 @@ constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the 
 namespace message {
 
 STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
-STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.\ndefault of directory is current directory.\n\nDon't support specification of multiple directories yet.\n" );
+STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.  default of directory is current directory.\nDon't support specification of multiple directories yet." );
+STATIC_CONSTEXPR jig::STRING::Literal USAGE_DIRECTORY( "--directory: Specify search directories.\n  ( This option is always specified if none is specified )." );
+STATIC_CONSTEXPR jig::STRING::Literal USAGE_HELP( "--help: Display this message." );
+STATIC_CONSTEXPR jig::STRING::Literal USAGE_VERSION( "--version: Display the version of this application." );
+
+STATIC_CONSTEXPR jig::STRING::Literal NEW_LINE( "\n" );
+STATIC_CONSTEXPR jig::STRING::Literal DOUBLE_NEW( "\n\n" );
+
+STATIC_CONSTEXPR jig::STRING::Literal HELP_MESSAGE = HELP + DOUBLE_NEW + USAGE_DIRECTORY + NEW_LINE + USAGE_HELP + NEW_LINE + USAGE_VERSION + NEW_LINE;
 
 template<jig::STRING::Literal MESSAGE, typename CharT, typename Traits>
 constexpr void Display( std::basic_ostream<CharT, Traits> & ost ) { ost << MESSAGE; }
@@ -300,7 +307,7 @@ int main( int argc, char const * argv [] ) {
 
     if ( cmd_line.isThere( "help" ) == true ) {
       using namespace message;
-      Display<HELP>( std::cout );
+      Display<HELP_MESSAGE>( std::cout );
       return 0;
     }
 
@@ -326,7 +333,7 @@ int main( int argc, char const * argv [] ) {
     using namespace message;
     std::cerr << e.what() << std::endl;
 
-    Display<HELP>( std::cerr );
+    Display<HELP_MESSAGE>( std::cerr );
 
     for ( auto itr : path_list ) { if ( itr != nullptr ) { delete itr; } }
 
