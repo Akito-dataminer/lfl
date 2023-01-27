@@ -128,7 +128,9 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) : len_( N ) { std::copy_n( literal, N, str_ ); }
 
   template<size_type... INDICES>
-  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> ) : str_{ literal_p[INDICES] ... }, len_( N ) {}
+  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> )
+  : str_{ ( INDICES <= N ? literal_p[INDICES] : value_type() ) ... }
+    , len_( ( !( N < Length( literal_p ) ) ? Length( literal_p ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) ) {}
 
   value_type str_[N];
   decltype( N ) len_;
