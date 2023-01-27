@@ -48,6 +48,7 @@
 #include "Util/Comparable.hpp"
 
 #include <string>
+#include <stdexcept>
 #include <cstring>
 #include <utility>
 #include <type_traits>
@@ -55,6 +56,7 @@
 #include <ostream>
 
 #define STATIC_CONSTEXPR static constexpr
+#define STATIC_CONSTINIT static constinit
 
 namespace UTIL {
   // template<typename T> constexpr bool false_v = false;
@@ -109,9 +111,10 @@ constexpr bool IsSameN( T const str1, T const str2, size_type const N ) {
   return true;
 }
 
-// N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling. Because this array can't be changed it size and value later.
-template<typename CharT, size_type N>
-struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLiteralImpl<CharT, N>>{
+// N is guaranteed greater than 0. It has no meanings str_chars_[0] when compiling.
+// Because this array can't be changed it size and value later.
+template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
+struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLiteralImpl<CharT, N>> {
   using value_type = CharT;
   using const_pointer = CharT const *;
   using reference = CharT &;
@@ -120,22 +123,70 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   using const_iterator = value_type const *;
   using difference_type = std::ptrdiff_t;
 
-  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) { std::copy_n( literal, N, str_ ); }
+  explicit consteval ExcludeNULLLiteralImpl() : str_{ '\0' }, len_( 0 ) {}
+
+  explicit consteval ExcludeNULLLiteralImpl( CharT const ( & literal )[N + 1] ) : len_( N ) { std::copy_n( literal, N, str_ ); }
 
   template<size_type... INDICES>
-  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> ) : str_{ literal_p[INDICES] ... } {}
+  explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> )
+  : str_{ ( INDICES <= N ? literal_p[INDICES] : value_type() ) ... }
+    , len_( !( N < Length( literal_p ) ) ? Length( literal_p ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) {}
+
+  template<size_type... INDICES, typename... Args>
+  explicit consteval ExcludeNULLLiteralImpl( std::index_sequence<INDICES...>, Args&& ... args )
+  : str_{ ( INDICES <= sizeof...( Args ) ? args : value_type() ) ... } , len_( !( N < sizeof...( Args ) ) ? sizeof...( Args ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) {}
 
   value_type str_[N];
-  STATIC_CONSTEXPR decltype( N ) len_ = N;
+  decltype( N ) len_;
 
   constexpr const_pointer get() const noexcept { return str_; }
-  consteval size_type size() const noexcept { return len_; }
+  constexpr size_type size() const noexcept { return N; }
+  constexpr size_type length() const noexcept { return len_; }
 
-  constexpr value_type operator[] ( size_type index ) const noexcept { return str_[index]; }
+  constexpr reference operator[] ( size_type index ) noexcept { return str_[index]; }
+  constexpr const_reference operator[] ( size_type index ) const noexcept { return str_[index]; }
+
+  template<typename T>
+  constexpr ExcludeNULLLiteralImpl<CharT, N> & operator+= ( T const & literal2 ) {
+    append( literal2 );
+    return *this;
+  }
+
+  constexpr void append( CharT const one_char ) {
+    if ( ( len_ + 1 ) < N ) {
+      str_[len_] = one_char;
+      ++len_;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
+
+  constexpr void append( CharT const * str ) {
+    size_type len2 = std::strlen(str);
+
+    if ( ( len2 + len_ ) < N ) {
+      for ( size_type i = 0; i < len2; ++i ) { str_[len_ + i] = str[i]; }
+      len_ += len2;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
+
+  template<size_type N2>
+  constexpr void append( ExcludeNULLLiteralImpl<CharT, N2> const & str ) {
+    size_type len2 = str.len_;
+
+    if ( ( len2 + this->len_ ) < N ) {
+      for ( size_type i = 0; i < len2; ++i ) { this->str_[len_ + i] = str.str_[i]; }
+      this->len_ += str.len_;
+    } else {
+      throw std::length_error( "append: literal of argument is too long" );
+    }
+  }
 
 protected:
-  constexpr iterator makeIterator ( size_type const index ) noexcept { return ( str_ + index ); }
-  constexpr const_iterator makeConstIterator ( size_type const index ) const noexcept { return ( str_ + index ); }
+  constexpr iterator makeIterator( size_type const index ) { return ( ( index < ( N + 1 ) ) ? ( str_ + index ) : ( throw std::out_of_range("makeIterator: out of range") ) ); }
+  constexpr const_iterator makeConstIterator( size_type const index ) const { return ( ( index < ( N + 1 ) ) ? ( str_ + index ) : ( throw std::out_of_range("makeConstIterator: out of range") ) ); }
 };
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
@@ -146,55 +197,61 @@ ExcludeNULLLiteralImpl( CharT const ( & literal )[N], std::make_index_sequence<N
 // operator<
 ////////////////////
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) {
-  if constexpr ( N1 != N2 ) {
-    return false;
-  } else {
-    for ( size_t i = 0; i < N1; ++i ) {
-      if ( literal1.str_[i] < literal2.str_[i] ) { return true; }
-    }
-    return false;
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) noexcept {
+  auto len1 = literal1.len_;
+  auto len2 = literal2.len_;
+
+  for ( size_type index = 0; index < std::min( len1, len2 ); ++index ) {
+    if ( literal1[index] < literal2[index] ) { return true; }
   }
+
+  return ( len1 < len2 );
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) {
-  if constexpr ( N1 != ( N2 - 1 ) ) {
-    return false;
-  } else {
-    for ( size_t i = 0; i < N1; ++i ) {
-      if ( literal1.str_[i] < literal2[i] ) { return true; }
-    }
-    return false;
+constexpr bool operator< ( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, CharT const ( & literal2 )[N2] ) noexcept {
+  auto len1 = literal1.len_;
+
+  for ( size_t index = 0; index < std::min( len1, N2 ); ++index ) {
+    if ( literal1[index] < literal2[index] ) { return true; }
   }
+
+  return ( len1 < ( N2 - 1 ) );
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) { return literal2 < literal1; }
+constexpr bool operator< ( CharT const ( & literal1 )[N1], ExcludeNULLLiteralImpl<CharT, N2> const & literal2 ) noexcept {
+  auto len2 = literal2.len_;
 
-// 最後の'\0'は含めたくない。
-// というよりも、コンパイル時に要素数も分かるから必要ない。
+  for ( size_t index = 0; index < std::min( N1, len2 ) ; ++index ) {
+    if ( literal1[index] <  literal2[index] ) { return true; }
+  }
+
+  return ( ( N1 - 1 ) < len2 );
+}
+
+////////////////////
+// Literal
+////////////////////
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* = nullptr>
 struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
 
+  explicit consteval Literal() : ExcludeNULLLiteralImpl<CharT, N>() {}
   explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal, std::make_index_sequence<N>() ) {}
+  template<typename... Args>
+  explicit consteval Literal( Args&& ... args ) : ExcludeNULLLiteralImpl<CharT, N>( std::make_index_sequence<sizeof...(Args)>(), args... ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
-  Literal<CharT, N> & operator=( Literal<CharT, N>  const & ) = default;
-  Literal<CharT, N> ( Literal<CharT, N> && ) = default;
+  Literal<CharT, N> & operator=( Literal<CharT, N> const & ) = default;
+  Literal<CharT, N> ( Literal<CharT, N> && rhs ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
   constexpr typename impl_type::iterator begin() noexcept { return impl_type::makeIterator( 0 ); }
-  constexpr typename impl_type::iterator end() noexcept { return impl_type::makeIterator( N ); }
+  constexpr typename impl_type::iterator end() noexcept { return impl_type::makeIterator( impl_type::len_ ); }
   constexpr typename impl_type::const_iterator cbegin() const noexcept { return impl_type::makeConstIterator( 0 ); }
-  constexpr typename impl_type::const_iterator cend() const noexcept { return impl_type::makeConstIterator( N ); }
+  constexpr typename impl_type::const_iterator cend() const noexcept { return impl_type::makeConstIterator( impl_type::len_ ); }
 };
-
-template<typename CharT, size_type N>
-inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostream<CharT> & lhs, Literal<CharT, N> const & rhs ) {
-  return lhs << rhs.get();
-}
 
 // ポインタ対応のための特殊化
 template<typename CharT, size_type N, UTIL::if_nullp_c<( N > 0 )>* NPTR>
@@ -202,6 +259,32 @@ struct Literal<CharT const *, N, NPTR> : public ExcludeNULLLiteralImpl<CharT, N>
   using impl_type = ExcludeNULLLiteralImpl<CharT, N>;
   explicit consteval Literal( CharT const * string_literal_p ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal_p, std::make_index_sequence<N>() ) {}
 };
+
+////////////////////
+// operator<<
+////////////////////
+template<typename CharT, size_type N>
+inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostream<CharT> & lhs, Literal<CharT, N> const & rhs ) {
+  return lhs << rhs.get();
+}
+
+////////////////////
+// operator+
+////////////////////
+template<typename CharT, size_type N1, size_type N2, size_type... INDICES>
+inline consteval auto ConcateImpl( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, size_type len1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2, size_type len2, std::index_sequence<INDICES...> ) {
+  return Literal<CharT, N1 + N2>( ( INDICES < len1 ? literal1[INDICES] : INDICES < ( len1 + len2 ) ? literal2[INDICES - len1] : CharT() ) ... );
+}
+
+template<typename CharT, size_type N1, size_type N2>
+inline consteval auto Concate( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+  return ConcateImpl( literal1, literal1.length(), literal2, literal2.length(), std::make_index_sequence<N1 + N2>() );
+}
+
+template<typename CharT, size_type N1, size_type N2>
+inline consteval auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+  return Concate( literal1, literal2 );
+}
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)
 template<typename CharT, size_type N>
@@ -230,142 +313,5 @@ consteval auto ToStringLiteral () {
 }
 
 } // STRING
-
-namespace OPTION {
-// テンプレート引数に与えられたStringLiteralの集合から、
-// マッチするものがあれば、そのインデックスを返して、
-// マッチするものが無ければfalseを返す(std::pairとして)。
-//
-// 多重定義の解決時に一致度が同じとなるような関数を複数定義したことになってしまう。
-// そのため、StringLiteralの指定が一つだけのときの多重定義の一致度を高める必要がある。
-// StringLiteralが一つだけのときの一致度を高めるための手段として、
-// テンプレート引数の最後(nullptrの部分)で一致度が高くなるようにしている。
-template<index_type INDEX, size_type OPTION_NUM, STRING::Literal LITERAL, UTIL::if_nullp_c< INDEX == ( OPTION_NUM - 1 ) >* = nullptr>
-inline constexpr std::pair<bool, index_type> LiteralIndexImpl( char_cptr const arg_str ) {
-  return ( STRING::IsSame<LITERAL>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : std::pair<bool, index_type>{ false, OPTION_NUM };
-}
-
-template<index_type INDEX, size_type OPTION_NUM, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
-inline constexpr std::pair<bool, index_type> LiteralIndexImpl( auto const arg_str ) {
-  return ( STRING::IsSame<LITERAL_HEAD>( arg_str ) == true ) ? std::pair<bool, index_type>{ true, INDEX } : LiteralIndexImpl<INDEX + 1, OPTION_NUM, LITERAL_TAIL...>( arg_str );
-}
-
-template<STRING::Literal... LITERALS>
-constexpr auto LiteralIndex( char_cptr const arg_str ) {
-  return LiteralIndexImpl<0, sizeof...( LITERALS ), LITERALS...>( arg_str );
-}
-
-// テンプレート引数に与えられた文字列リテラルを、
-// タプルのように保存するためのテンプレートクラス
-template<index_type INDEX, STRING::Literal... LITERAL_TAIL>
-struct OptionsImpl;
-
-template<index_type INDEX>
-struct OptionsImpl<INDEX> {};
-
-template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
-struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<INDEX + 1, LITERAL_TAIL...> {
-  consteval decltype( LITERAL_HEAD ) const & literal() const noexcept { return LITERAL_HEAD; }
-
-  constexpr auto isMatch( char const * str ) {
-    if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
-      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? std::pair<char_cptr, size_type>{ LITERAL_HEAD.get(), LITERAL_HEAD.size() } : std::pair<char_cptr, size_type>{ nullptr, 0 };
-    } else {
-      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? std::pair<char_cptr, size_type>{ LITERAL_HEAD.get(), LITERAL_HEAD.size() } : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::isMatch( str );
-    }
-  }
-
-  constexpr auto matchIndex( char const * str ) {
-    if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
-      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? std::pair<bool, index_type>{ true, INDEX }
-        : std::pair<bool, index_type>{ false, INDEX + 1 };
-    } else {
-      return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
-        ? std::pair<bool, index_type>{ true, INDEX }
-        : OptionsImpl<INDEX + 1, LITERAL_TAIL...>::matchIndex( str );
-    }
-  }
-};
-
-template<STRING::Literal ... LITERALS>
-struct OptionList : public OptionsImpl<0, LITERALS...> {};
-
-// 上記テンプレートクラスから文字列をコンパイル時に受け取るための即時関数
-template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITERAL_TAIL>
-inline consteval decltype( LITERAL_HEAD ) const & GetStringLiteral( OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> const & option ) { return option.literal(); }
-
-template<index_type INDEX, STRING::Literal... STRING_LITERALS>
-inline consteval auto GetLiteral( OptionList<STRING_LITERALS...> const & options ) -> decltype( GetStringLiteral<INDEX>( options ) ) { return GetStringLiteral<INDEX>( options ); }
-
-// template<typename CharTp>
-// struct MakeOptionListImpl {
-//   OptionList<> literals_;
-
-//   template<index_type... indices>
-//   MakeOptionListImpl( CharTp const literal_ptrs, std::index_sequence<indices...> )
-//   : literals_( STRING::StringLiteral<char const *, STRING::Length( literal_ptrs[indices] )>()... ) {}
-// };
-
-// template<typename CharTp>
-// struct OptionsList : public MakeOptionListImpl<CharTp> {
-//   template<typename T, size_type NUM>
-//   explicit consteval OptionsList( T const literal_ptrs ) : MakeOptionListImpl<CharTp>( literal_ptrs, std::make_index_sequence<NUM>() ) {}
-// };
-
-// 複数のStringLiteralを扱うためのクラス
-//
-// char const * option_strs[] = { "directory", "help" }
-// OptionList<option_strs> option_list;
-// auto [ is_match, index ] = option_list.discriminant();
-//
-// のようなことをしたい
-// template<typename Tp, size_type OPTION_NUM, UTIL::if_nullp_c<std::is_pointer_v<Tp>>* = nullptr>
-// struct MakeOptionList {
-//   explicit consteval MakeOptionList( Tp const ( & literal_array )[OPTION_NUM] ) : options_( literal_array, OPTION_NUM ) {}
-
-//   OptionsList<Tp> options_;
-
-//   index_type discriminant() {}
-// };
-
-// 現状では、テンプレートパラメータとして与えられていないstringsを
-// テンプレートパラメータに使おうとしているので、
-// これをインスタンス化したら、その瞬間にエラーになる。
-// template<typename Tp, index_type... INDICES>
-// inline consteval auto MakeOptionListImpl( Tp const strings, std::index_sequence<INDICES...> ) {
-//   using namespace STRING;
-//   return OptionList<StringLiteral<std::remove_pointer<Tp> const *, Length( strings[INDICES] )>( strings[INDICES] ) ...>();
-// }
-
-// template<typename Tp, size_type OPTION_NUM, UTIL::if_nullp_c<std::is_pointer_v<Tp>>* = nullptr>
-// inline consteval auto MakeOptionList( Tp const ( & literal_array )[OPTION_NUM] ) {
-//   return MakeOptionListImpl( literal_array, std::make_index_sequence<OPTION_NUM>() );
-// }
-
-// template<typename CharT, size_type N>
-// StringLiteral( CharT const ( & literal )[N] ) -> StringLiteral<CharT, N - 1>;
-
-// template<typename CharT = char const[], STRING::StringLiteral<CharT> ... literals>
-// class OptionSet() -> class OptionSet<char const[], literals...>;
-
-// template<typename T, size_type N>
-// consteval index_type discriminant( List<T, N> list, char_cptr const arg_option ) {
-//   size_type const option_num = list.num();
-
-//   for ( size_t index = 0; index < option_num; ++index ) {
-//     size_type length = STRING::Length( arg_option );
-
-//     if ( STRING::IsSameN( arg_option, list.strHead( index ), length ) ) {
-//       return index;
-//     }
-//   }
-
-//   return option_num;
-// }
-
-} // OPTION
 
 } // jig
