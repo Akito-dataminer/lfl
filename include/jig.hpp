@@ -244,7 +244,7 @@ struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> const & ) = default;
-  Literal<CharT, N> ( Literal<CharT, N> && ) = default;
+  Literal<CharT, N> ( Literal<CharT, N> && rhs ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> && ) = default;
 
   constexpr typename impl_type::iterator begin() noexcept { return impl_type::makeIterator( 0 ); }
@@ -271,29 +271,19 @@ inline STATIC_CONSTEXPR std::basic_ostream<CharT>& operator << ( std::basic_ostr
 ////////////////////
 // operator+
 ////////////////////
-template<typename CharT, typename T1, typename T2>
-struct AddString {
-public:
-  AddString( T1 const & op1, T2 const & op2 ) : op1_( op1 ), op2_( op2 ) {}
-
-  STATIC_CONSTEXPR size_type len_ = T1::len_ + T2::len_;
-  using type = Literal<CharT, len_>;
-
-  constexpr type operator() () {
-    type return_literal( op1_ );
-
-    return_literal.append( op2_ );
-
-    return return_literal;
-  }
-private:
-  T1 const & op1_;
-  T2 const & op2_;
-};
+template<typename CharT, size_type N1, size_type N2, size_type... INDICES>
+inline consteval auto ConcateImpl( ExcludeNULLLiteralImpl<CharT, N1> const & literal1, size_type len1, ExcludeNULLLiteralImpl<CharT, N2> const & literal2, size_type len2, std::index_sequence<INDICES...> ) {
+  return Literal<CharT, N1 + N2>( ( INDICES < len1 ? literal1[INDICES] : INDICES < ( len1 + len2 ) ? literal2[INDICES - len1] : CharT() ) ... );
+}
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
-  return AddString( literal1, literal2 );
+inline consteval auto Concate( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+  return ConcateImpl( literal1, literal1.length(), literal2, literal2.length(), std::make_index_sequence<N1 + N2>() );
+}
+
+template<typename CharT, size_type N1, size_type N2>
+constexpr inline auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+  return Concate( literal1, literal2 );
 }
 
 // 末尾の'\0'を含めないようにするための補助推論(補助推論はC++17から)

@@ -202,6 +202,23 @@ BOOST_AUTO_TEST_CASE( test_operator_plassign ) {
   BOOST_CHECK( literal == literal_test2 );
 }
 
+BOOST_AUTO_TEST_CASE( test_Concate ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal literal1( "directory" );
+  STATIC_CONSTEXPR Literal literal2( "cucumber" );
+  STATIC_CONSTEXPR auto literal3 = Concate( literal1, literal2 );
+  STATIC_CONSTEXPR Literal literal_test( "directorycucumber" );
+
+  static_assert( literal3.length() == 17 );
+  static_assert( literal3.size() == 17 );
+  static_assert( literal3 == literal_test );
+
+  BOOST_CHECK( literal3.length() == 17 );
+  BOOST_CHECK( literal3.size() == 17 );
+  BOOST_CHECK( literal3 == literal_test );
+}
+
 BOOST_AUTO_TEST_CASE( test_operator_eq ) {
   using namespace jig::STRING;
 
