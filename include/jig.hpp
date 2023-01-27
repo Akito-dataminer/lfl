@@ -282,7 +282,7 @@ inline consteval auto Concate( Literal<CharT, N1> const & literal1, Literal<Char
 }
 
 template<typename CharT, size_type N1, size_type N2>
-constexpr inline auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
+inline consteval auto operator+ ( Literal<CharT, N1> const & literal1, Literal<CharT, N2> const & literal2 ) {
   return Concate( literal1, literal2 );
 }
 
