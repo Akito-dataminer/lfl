@@ -109,6 +109,15 @@ BOOST_AUTO_TEST_CASE( test_ToStringLiteral ) {
   static_assert( literal1.size() == 9 );
 }
 
+BOOST_AUTO_TEST_CASE( test_chars_ctor ) {
+  using namespace jig::STRING;
+
+  STATIC_CONSTEXPR Literal<char, 10> literal( 'd', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y' );
+
+  static_assert( literal.length() == 9 );
+  BOOST_CHECK( literal.length() == 9 );
+}
+
 BOOST_AUTO_TEST_CASE( test_append ) {
   using namespace jig::STRING;
 

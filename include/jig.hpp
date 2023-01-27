@@ -130,7 +130,11 @@ struct ExcludeNULLLiteralImpl : public UTIL::COMPARABLE::CompDef<ExcludeNULLLite
   template<size_type... INDICES>
   explicit consteval ExcludeNULLLiteralImpl( CharT const * literal_p, std::index_sequence<INDICES...> )
   : str_{ ( INDICES <= N ? literal_p[INDICES] : value_type() ) ... }
-    , len_( ( !( N < Length( literal_p ) ) ? Length( literal_p ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) ) {}
+    , len_( !( N < Length( literal_p ) ) ? Length( literal_p ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) {}
+
+  template<size_type... INDICES, typename... Args>
+  explicit consteval ExcludeNULLLiteralImpl( std::index_sequence<INDICES...>, Args&& ... args )
+  : str_{ ( INDICES <= sizeof...( Args ) ? args : value_type() ) ... } , len_( !( N < sizeof...( Args ) ) ? sizeof...( Args ) : throw std::length_error( "ExcludeNULLLiteralImpl: literal of argument is too long" ) ) {}
 
   value_type str_[N];
   decltype( N ) len_;
@@ -235,6 +239,8 @@ struct Literal : public ExcludeNULLLiteralImpl<CharT, N> {
 
   explicit consteval Literal() : ExcludeNULLLiteralImpl<CharT, N>() {}
   explicit consteval Literal( CharT const ( & string_literal )[N + 1] ) : ExcludeNULLLiteralImpl<CharT, N>( string_literal, std::make_index_sequence<N>() ) {}
+  template<typename... Args>
+  explicit consteval Literal( Args&& ... args ) : ExcludeNULLLiteralImpl<CharT, N>( std::make_index_sequence<sizeof...(Args)>(), args... ) {}
 
   Literal<CharT, N> ( Literal<CharT, N>  const & ) = default;
   Literal<CharT, N> & operator=( Literal<CharT, N> const & ) = default;
