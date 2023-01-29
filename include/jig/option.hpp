@@ -44,7 +44,7 @@ template<index_type INDEX, STRING::Literal LITERAL_HEAD, STRING::Literal... LITE
 struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<INDEX + 1, LITERAL_TAIL...> {
   consteval decltype( LITERAL_HEAD ) const & literal() const noexcept { return LITERAL_HEAD; }
 
-  constexpr auto isMatch( char const * str ) {
+  constexpr auto isMatch( char const * str ) const {
     if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
         ? std::pair<char_cptr, size_type>{ LITERAL_HEAD.get(), LITERAL_HEAD.size() } : std::pair<char_cptr, size_type>{ nullptr, 0 };
@@ -54,7 +54,7 @@ struct OptionsImpl<INDEX, LITERAL_HEAD, LITERAL_TAIL...> : public OptionsImpl<IN
     }
   }
 
-  constexpr auto matchIndex( char const * str ) {
+  constexpr auto matchIndex( char const * str ) const {
     if constexpr ( sizeof...( LITERAL_TAIL ) == 0 ) {
       return ( STRING::IsSame<LITERAL_HEAD>( str ) == true )
         ? std::pair<bool, index_type>{ true, INDEX }
