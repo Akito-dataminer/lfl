@@ -21,6 +21,13 @@
 constexpr char DELIMITER = '\\';
 constexpr char OPTION_SPECIFIER[] = "--";
 constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
+STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
+jig::OPTION::OptionList<
+jig::STRING::Literal<char const *, jig::STRING::Length(options[0])>( options[0] ),
+jig::STRING::Literal<char const *, jig::STRING::Length(options[1])>( options[1] ),
+jig::STRING::Literal<char const *, jig::STRING::Length(options[2])>( options[2] )
+> option_list;
+
 
 namespace message {
 
@@ -136,7 +143,6 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
 
   STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;
 
-  STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
 
   if ( std::strlen( arg ) < SPECIFIER_LENGTH ) {
     // argがオプション指定子よりも短い時点で、
@@ -144,12 +150,6 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
     key_ = options[jig::ArraySize( options ) - 1];
     value_ = arg;
   } else if ( strncmp( arg, OPTION_SPECIFIER, null_exclude_length ) == 0 ) {
-    OptionList<
-      STRING::Literal<char const *, STRING::Length(options[0])>( options[0] ),
-      STRING::Literal<char const *, STRING::Length(options[1])>( options[1] ),
-      STRING::Literal<char const *, STRING::Length(options[2])>( options[2] )
-    > option_list;
-
     char const * key_head = arg + null_exclude_length;
     auto [head_ptr, length] = option_list.isMatch( key_head );
     // std::cerr << "key_head : " << key_head << std::endl;
