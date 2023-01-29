@@ -18,16 +18,16 @@
 #include <vector>
 #include <windows.h>
 
-constexpr char DELIMITER = '\\';
-constexpr char OPTION_SPECIFIER[] = "--";
-constexpr int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
+STATIC_CONSTEXPR char DELIMITER = '\\';
+STATIC_CONSTEXPR char OPTION_SPECIFIER[] = "--";
+STATIC_CONSTEXPR int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
+STATIC_CONSTEXPR int NULL_EXCLUDE_LENGTH = SPECIFIER_LENGTH - 1;
 STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
-jig::OPTION::OptionList<
+STATIC_CONSTEXPR jig::OPTION::OptionList<
 jig::STRING::Literal<char const *, jig::STRING::Length(options[0])>( options[0] ),
 jig::STRING::Literal<char const *, jig::STRING::Length(options[1])>( options[1] ),
 jig::STRING::Literal<char const *, jig::STRING::Length(options[2])>( options[2] )
 > option_list;
-
 
 namespace message {
 
@@ -141,16 +141,13 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
   using namespace jig;
   using namespace jig::OPTION;
 
-  STATIC_CONSTEXPR int null_exclude_length = SPECIFIER_LENGTH - 1;
-
-
   if ( std::strlen( arg ) < SPECIFIER_LENGTH ) {
     // argがオプション指定子よりも短い時点で、
     // オプションでないことが確定する。
     key_ = options[jig::ArraySize( options ) - 1];
     value_ = arg;
-  } else if ( strncmp( arg, OPTION_SPECIFIER, null_exclude_length ) == 0 ) {
-    char const * key_head = arg + null_exclude_length;
+  } else if ( strncmp( arg, OPTION_SPECIFIER, NULL_EXCLUDE_LENGTH ) == 0 ) {
+    char const * key_head = arg + NULL_EXCLUDE_LENGTH;
     auto [head_ptr, length] = option_list.isMatch( key_head );
     // std::cerr << "key_head : " << key_head << std::endl;
     // std::cerr << std::string( head_ptr, length ) << std::endl;
