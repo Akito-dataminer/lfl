@@ -44,7 +44,7 @@ STATIC_CONSTEXPR jig::STRING::Literal DOUBLE_NEW( "\n\n" );
 STATIC_CONSTEXPR jig::STRING::Literal HELP_MESSAGE = HELP + DOUBLE_NEW + USAGE_DIRECTORY + NEW_LINE + USAGE_HELP + NEW_LINE + USAGE_VERSION + NEW_LINE;
 
 template<jig::STRING::Literal MESSAGE, typename CharT, typename Traits>
-constexpr void Display( std::basic_ostream<CharT, Traits> & ost ) { ost << MESSAGE; }
+constexpr void Display( std::basic_ostream<CharT, Traits> & ost ) { ost << MESSAGE << std::endl; }
 
 } // message
 
