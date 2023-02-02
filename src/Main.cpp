@@ -119,71 +119,146 @@ bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() );
 //   NUM
 // };
 
+class CmdArg {
+public:
+  constexpr explicit CmdArg( char const *, bool const );
+  constexpr CmdArg( CmdArg const & ) = default;
+  constexpr CmdArg & operator=( CmdArg const & ) = default;
+  constexpr CmdArg( CmdArg && ) noexcept = default;
+  constexpr CmdArg & operator=( CmdArg && ) noexcept = default;
+  constexpr ~CmdArg();
+
+  constexpr inline std::string const & str() const noexcept { return arg_; }
+  constexpr inline bool isOption() const noexcept { return is_option_; }
+  constexpr inline bool isBinomial() const noexcept { return is_binomial_; }
+private:
+  std::string arg_;
+  bool is_option_;
+  bool is_binomial_;
+};
+
+constexpr CmdArg::CmdArg( char const * arg, bool const has_option_specifier )
+: arg_( arg ), is_option_( false ), is_binomial_( false ) {
+  if ( has_option_specifier ) {
+    auto [ is_option, option_index ] = option_list.matchIndex( arg );
+    is_option_ = is_option;
+
+    // 現状では、二項オプションかどうかは、
+    // option_listの添字で判断するしかない。
+    if ( is_option ) {
+      if ( !( option_index == 0 || option_index == 1 ) ) { is_binomial_ = true; }
+    }
+  }
+}
+
+constexpr CmdArg::~CmdArg() {}
+
+class CmdParse {
+public:
+  using value_type = CmdArg;
+  using container_type = std::vector<value_type>;
+
+  constexpr CmdParse( int const, char const *[] );
+  constexpr CmdParse( CmdParse const & ) = default;
+  constexpr CmdParse & operator=( CmdParse const & rhs ) = default;
+  constexpr CmdParse( CmdParse && ) = default;
+  constexpr CmdParse & operator=( CmdParse && ) = default;
+  constexpr ~CmdParse();
+
+  constexpr std::pair<std::string, std::string> get();
+
+  constexpr inline bool isThereHelp() const noexcept { return is_there_help_; }
+  constexpr inline bool next() noexcept {
+    // std::cerr << "index_ : " << index_ << std::endl;
+    index_ += ( arg_list_[index_].isBinomial() ) ? 2 : 1;
+    // std::cerr << "boolean : " << ( index_ >= arg_list_.size() ) << std::endl;
+    return ( index_ >= arg_list_.size() );
+  }
+
+  constexpr inline bool isEnd() const noexcept { return ( index_ == arg_list_.size() - 1 ); }
+private:
+  std::size_t index_;
+  container_type arg_list_;
+  bool is_there_help_;
+
+  constexpr inline std::size_t lengthAsOption( char const * str ) const noexcept { auto [ ptr, length ] = option_list.isMatch( str ); return ptr != nullptr ? length : 0; }
+};
+
+// 何個目が二項オプションか、単項オプションか、あるいは、それはオプションかどうか
+// といったような、指定されたオプションの構造を調べる。
+constexpr CmdParse::CmdParse( int const arg_count, char const * arg_chars[] )
+:index_( 0 ), is_there_help_( false ) {
+  // オプションの構造解析フェーズ
+  for ( std::size_t arg_index = 1; arg_index < arg_count; ++arg_index ) {
+    // この時点ではまだ、arg_chars[arg_index]に"--"が付けられているのか、
+    // 付けられていないのかが分からない。
+    if ( !std::strncmp( arg_chars[arg_index], OPTION_SPECIFIER, NULL_EXCLUDE_OS_LENGTH ) ) {
+      arg_list_.emplace_back( CmdArg( arg_chars[arg_index] + NULL_EXCLUDE_OS_LENGTH, true ) );
+    } else {
+      arg_list_.emplace_back( CmdArg( arg_chars[arg_index], false ) );
+    }
+  }
+
+  // --helpがコマンドライン引数に含まれているかどうかを調べる。
+  for ( auto itr : arg_list_ ) {
+    if ( itr.isOption() ) {
+      if ( itr.str() == "help" ) {
+        is_there_help_ = true;
+        break;
+      }
+    }
+  }
+}
+
+constexpr CmdParse::~CmdParse() {}
+
+constexpr std::pair<std::string, std::string> CmdParse::get() {
+  if ( index_ == arg_list_.size() ) { return std::pair( "", "" ); }
+
+  if ( is_there_help_ ) { return std::pair( "help", arg_list_[index_].str() ); }
+
+  if ( arg_list_[index_].isOption() ) {
+    if ( arg_list_[index_].isBinomial() ) {
+      return std::pair( arg_list_[index_].str(), arg_list_[index_ + 1].str() );
+    } else {
+      return std::pair( arg_list_[index_].str(), "" );
+    }
+  }
+
+  return std::pair( "directory", arg_list_[index_].str() );
+}
+
 // 基本的にはstd::mapと同じだが、
 // ディレクトリが複数指定される可能性もある。
 // そのため、キーの重複が許可されている必要があるので、
 // std::mapは使えない。
 class CmdOption {
 public:
-  constexpr CmdOption( char const *, char const * );
+  constexpr CmdOption( std::string const &, std::string const & );
+  constexpr CmdOption( std::pair<std::string, std::string> const & );
   constexpr ~CmdOption();
 
   constexpr std::string const & getKey() const noexcept { return key_; }
   constexpr std::string const & getValue() const noexcept { return value_; }
-  constexpr bool isUnaryOption() const noexcept { return (value_ == "") ? true : false; }
 private:
   std::string key_;
   std::string value_;
 };
 
-// argはオプションかもしれないし、そうでないかもしれない。
-constexpr CmdOption::CmdOption( char const * arg, char const * arg_value ) {
-  using namespace jig;
-  using namespace jig::OPTION;
+constexpr CmdOption::CmdOption( std::string const & key, std::string const & value ) : key_( key ), value_( value ) {}
 
-  if ( std::strlen( arg ) < SPECIFIER_LENGTH ) {
-    // argがオプション指定子よりも短い時点で、
-    // オプションでないことが確定する。
-    key_ = options[jig::ArraySize( options ) - 1];
-    value_ = arg;
-  } else if ( strncmp( arg, OPTION_SPECIFIER, NULL_EXCLUDE_OS_LENGTH ) == 0 ) {
-    char const * key_head = arg + NULL_EXCLUDE_OS_LENGTH;
-    auto [head_ptr, length] = option_list.isMatch( key_head );
-    // std::cerr << "key_head : " << key_head << std::endl;
-    // std::cerr << std::string( head_ptr, length ) << std::endl;
-
-    if ( head_ptr != nullptr ) {
-      // valueを取るオプションか、valueを取らないオプションかによって、
-      // valueに入れる値を変える。
-      auto [is_match, index] = option_list.matchIndex( key_head );
-      // std::cerr << "std::string( head_ptr ): " << std::string( head_ptr, length ) << std::endl;
-
-      if ( ( index == 0 ) || ( index == 1 ) ) {
-        // unary option
-        key_ = std::string( head_ptr, length );
-        value_ = "";
-      } else {
-        // binomial option
-        key_ = std::string( head_ptr, length );
-        value_ = std::string( arg_value, std::strlen( arg_value ) );
-      }
-    }
-  } else {
-    key_ = options[jig::ArraySize( options ) - 1];
-    value_ = arg;
-  }
-}
+constexpr CmdOption::CmdOption( std::pair<std::string, std::string> const & pair ) : key_( pair.first ), value_( pair.second ) {}
 
 constexpr CmdOption::~CmdOption() {}
 
 class CmdLine {
 public:
-  CmdLine( int const, char const * [] );
-  ~CmdLine();
+  constexpr CmdLine( int const, char const * [] );
+  constexpr ~CmdLine();
 
   constexpr CmdOption const & getOption( int const index ) const noexcept { return options_[index]; }
   constexpr int argNum() const noexcept { return argument_num_; }
-  std::vector<std::string> optionList( std::string const & );
+  constexpr std::vector<std::string> optionList( std::string const & );
 
   template<std::size_t N>
   constexpr bool isThere( char const (&)[N] ) const noexcept;
@@ -192,35 +267,31 @@ private:
   int argument_num_;
 };
 
-CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
+constexpr CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
 : argument_num_( 1 ) {
-  // コマンドライン上で与えられたすべての文字列を読み込むと前提している。
-  // そのため、与えられた文字列が一つだけのときは、
-  // 実行パス以外には何も指定されていないということ(=オプションが指定されていない)。
-  if ( arg_count != 1 ) {
-    try {
-      for ( int arg_index = 1; arg_index < arg_count; ++arg_index ) {
-        if ( arg_index < ( arg_count - 1 ) ) {
-          // std::cerr << "used binomial" << std::endl;
-          options_.emplace_back( arg_chars[arg_index], arg_chars[arg_index + 1] );
-        } else {
-          options_.emplace_back( arg_chars[arg_index], nullptr );
-        }
+  try {
+    // コマンドライン上で与えられたすべての文字列を読み込むと前提している。
+    // そのため、与えられた文字列が一つだけのときは、
+    // 実行パス以外には何も指定されていないということ(=オプションが指定されていない)。
+    if ( arg_count != 1 ) {
+      CmdParse parse( arg_count, arg_chars );
 
-        if ( ( options_.end() - 1 )->isUnaryOption() == false ) { ++arg_index; }
-      }
-    } catch ( ... ) {
-      throw;
+      do { options_.emplace_back( CmdOption( parse.get() ) ); } while( !parse.next() );
+
+      argument_num_ = options_.size();
+    } else {
+      // for ( std::size_t arg_index = 1; arg_index < arg_count; ++arg_index ) {
+      //   options_.emplace_back( arg_chars[arg_index] );
+      // }
     }
-
-    argument_num_ += options_.size();
+  } catch ( ... ) {
+    throw;
   }
 }
 
-CmdLine::~CmdLine() {
-}
+constexpr CmdLine::~CmdLine() {}
 
-std::vector<std::string> CmdLine::optionList( std::string const & key ) {
+constexpr std::vector<std::string> CmdLine::optionList( std::string const & key ) {
   std::vector<std::string> option_list;
 
   for ( auto itr : options_ ) {
@@ -305,8 +376,19 @@ int main( int argc, char const * argv [] ) {
 
     if ( cmd_line.isThere( "help" ) ) {
       using namespace message;
-      Display<HELP_MESSAGE>( std::cout );
-      return 0;
+
+      auto help_list = cmd_line.optionList( "help" );
+
+      if ( help_list.size() == 0 ) {
+        Display<HELP_MESSAGE>( std::cout );
+        return 0;
+      } else {
+        for ( auto itr : help_list ) {
+          if ( itr == "help" ) { Display<USAGE_HELP>( std::cout ); }
+          if ( itr == "version" ) { Display<USAGE_VERSION>( std::cout ); }
+          if ( itr == "directory" ) { Display<USAGE_DIRECTORY>( std::cout ); }
+        }
+      }
     }
 
     if ( cmd_line.isThere( "version" ) ) {
