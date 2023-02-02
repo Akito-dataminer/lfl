@@ -125,8 +125,8 @@ bool Path::checkExist() const noexcept { return PathFileExists( path_.c_str() );
 // std::mapは使えない。
 class CmdOption {
 public:
-  CmdOption( char const *, char const * );
-  ~CmdOption();
+  constexpr CmdOption( char const *, char const * );
+  constexpr ~CmdOption();
 
   constexpr std::string const & getKey() const noexcept { return key_; }
   constexpr std::string const & getValue() const noexcept { return value_; }
@@ -137,7 +137,7 @@ private:
 };
 
 // argはオプションかもしれないし、そうでないかもしれない。
-CmdOption::CmdOption( char const * arg, char const * arg_value ) {
+constexpr CmdOption::CmdOption( char const * arg, char const * arg_value ) {
   using namespace jig;
   using namespace jig::OPTION;
 
@@ -174,8 +174,7 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
   }
 }
 
-CmdOption::~CmdOption() {
-}
+constexpr CmdOption::~CmdOption() {}
 
 class CmdLine {
 public:
@@ -186,7 +185,8 @@ public:
   constexpr int argNum() const noexcept { return argument_num_; }
   std::vector<std::string> optionList( std::string const & );
 
-  bool isThere( char const * ) const noexcept;
+  template<std::size_t N>
+  constexpr bool isThere( char const (&)[N] ) const noexcept;
 private:
   std::vector<CmdOption> options_;
   int argument_num_;
@@ -230,9 +230,10 @@ std::vector<std::string> CmdLine::optionList( std::string const & key ) {
   return option_list;
 }
 
-bool CmdLine::isThere( char const * option ) const noexcept {
+template<std::size_t N>
+constexpr bool CmdLine::isThere( char const ( & option )[N] ) const noexcept {
   for ( auto itr : options_ ) {
-    if ( std::strncmp( itr.getKey().c_str(), option, itr.getKey().size() ) == 0 ) { return true; }
+    if ( std::strncmp( itr.getKey().c_str(), option, N ) == 0 ) { return true; }
   }
 
   return false;
