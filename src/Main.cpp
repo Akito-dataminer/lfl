@@ -233,29 +233,6 @@ constexpr std::pair<std::string, std::string> CmdParse::get() {
   return std::pair( "directory", arg_list_[index_].str() );
 }
 
-// 基本的にはstd::mapと同じだが、
-// ディレクトリが複数指定される可能性もある。
-// そのため、キーの重複が許可されている必要があるので、
-// std::mapは使えない。
-class CmdOption {
-public:
-  constexpr CmdOption( std::string const &, std::string const & );
-  constexpr CmdOption( std::pair<std::string, std::string> const & );
-  constexpr ~CmdOption();
-
-  constexpr std::string const & getKey() const noexcept { return key_; }
-  constexpr std::string const & getValue() const noexcept { return value_; }
-private:
-  std::string key_;
-  std::string value_;
-};
-
-constexpr CmdOption::CmdOption( std::string const & key, std::string const & value ) : key_( key ), value_( value ) {}
-
-constexpr CmdOption::CmdOption( std::pair<std::string, std::string> const & pair ) : key_( pair.first ), value_( pair.second ) {}
-
-constexpr CmdOption::~CmdOption() {}
-
 class CmdLine {
 public:
   constexpr CmdLine( int const, char const * [] );
@@ -267,6 +244,10 @@ public:
   template<std::size_t N>
   constexpr bool isThere( char const (&)[N] ) const noexcept;
 private:
+  // このstd::pairの役割は基本的にはstd::mapと同じだが、
+  // ディレクトリが複数指定される可能性もある。
+  // そのため、キーの重複が許可されている必要があるので、
+  // std::mapは使えない。
   std::vector<std::pair<std::string, std::string>> options_;
 };
 
@@ -294,7 +275,7 @@ constexpr std::vector<std::string> CmdLine::optionList( std::string const & key 
   std::vector<std::string> option_list;
 
   for ( auto itr : options_ ) {
-    if ( itr.getKey() == key ) { option_list.emplace_back( itr.getValue() ); }
+    if ( itr.first == key ) { option_list.emplace_back( itr.second ); }
   }
 
   return option_list;
@@ -303,7 +284,7 @@ constexpr std::vector<std::string> CmdLine::optionList( std::string const & key 
 template<std::size_t N>
 constexpr bool CmdLine::isThere( char const ( & option )[N] ) const noexcept {
   for ( auto itr : options_ ) {
-    if ( std::strncmp( itr.getKey().c_str(), option, N ) == 0 ) { return true; }
+    if ( std::strncmp( itr.first.c_str(), option, N ) == 0 ) { return true; }
   }
 
   return false;
