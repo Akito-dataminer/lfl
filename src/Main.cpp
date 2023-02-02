@@ -379,7 +379,7 @@ int main( int argc, char const * argv [] ) {
 
       auto help_list = cmd_line.optionList( "help" );
 
-      if ( help_list.size() == 0 ) {
+      if ( help_list.size() == 1 ) {
         Display<HELP_MESSAGE>( std::cout );
       } else {
         for ( auto itr : help_list ) {
