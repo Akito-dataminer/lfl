@@ -208,8 +208,6 @@ constexpr CmdParse::~CmdParse() {}
 constexpr std::pair<std::string, std::string> CmdParse::get() {
   if ( index_ == arg_list_.size() ) { return std::pair( "", "" ); }
 
-  std::cerr << "first_help_index_ : " << first_help_index_ << std::endl;
-
   if ( first_help_index_ != -1 ) {
     if ( arg_list_[index_].str() == "help" ) {
       if ( arg_list_.size() == 1 ) {
