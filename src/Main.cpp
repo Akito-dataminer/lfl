@@ -261,29 +261,23 @@ public:
   constexpr CmdLine( int const, char const * [] );
   constexpr ~CmdLine();
 
-  constexpr CmdOption const & getOption( int const index ) const noexcept { return options_[index]; }
-  constexpr int argNum() const noexcept { return argument_num_; }
+  constexpr int argNum() const noexcept { return options_.size(); }
   constexpr std::vector<std::string> optionList( std::string const & );
 
   template<std::size_t N>
   constexpr bool isThere( char const (&)[N] ) const noexcept;
 private:
-  std::vector<CmdOption> options_;
-  int argument_num_;
+  std::vector<std::pair<std::string, std::string>> options_;
 };
 
-constexpr CmdLine::CmdLine( int const arg_count, char const * arg_chars [] )
-: argument_num_( 1 ) {
+constexpr CmdLine::CmdLine( int const arg_count, char const * arg_chars [] ) {
   try {
     // コマンドライン上で与えられたすべての文字列を読み込むと前提している。
     // そのため、与えられた文字列が一つだけのときは、
     // 実行パス以外には何も指定されていないということ(=オプションが指定されていない)。
     if ( arg_count != 1 ) {
       CmdParse parse( arg_count, arg_chars );
-
-      do { options_.emplace_back( CmdOption( parse.get() ) ); } while( !parse.next() );
-
-      argument_num_ = options_.size();
+      do { options_.emplace_back( parse.get() ); } while( !parse.next() );
     } else {
       // for ( std::size_t arg_index = 1; arg_index < arg_count; ++arg_index ) {
       //   options_.emplace_back( arg_chars[arg_index] );
@@ -402,7 +396,7 @@ int main( int argc, char const * argv [] ) {
       return 0;
     }
 
-    if ( cmd_line.argNum() == 1 ) {
+    if ( cmd_line.argNum() == 0 ) {
       path_list.emplace_back( new Path( ".\\", PathTag::IMPLICIT ) );
     } else if ( cmd_line.argNum() > 2 ) {
       std::cout << "yet unimplemented" << std::endl;
