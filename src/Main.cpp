@@ -208,6 +208,7 @@ constexpr CmdParse::~CmdParse() {}
 constexpr std::pair<std::string, std::string> CmdParse::get() {
   if ( index_ == arg_list_.size() ) { return std::pair( "", "" ); }
 
+  // return in help mode
   if ( first_help_index_ != -1 ) {
     if ( arg_list_[index_].str() == "help" ) {
       if ( arg_list_.size() == 1 ) {
@@ -220,6 +221,7 @@ constexpr std::pair<std::string, std::string> CmdParse::get() {
     return std::pair( "help", arg_list_[index_].str() );
   }
 
+  // return in NOT help mode
   if ( arg_list_[index_].isOption() ) {
     if ( arg_list_[index_].isBinomial() ) {
       return std::pair( arg_list_[index_].str(), arg_list_[index_ + 1].str() );
