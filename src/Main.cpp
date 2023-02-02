@@ -32,7 +32,7 @@ jig::STRING::Literal<char const *, jig::STRING::Length(options[2])>( options[2] 
 namespace message {
 
 STATIC_CONSTEXPR jig::STRING::Literal VERSION( VERSION_STRING );
-STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.  default of directory is current directory.\nDon't support specification of multiple directories yet." );
+STATIC_CONSTEXPR jig::STRING::Literal HELP( "Usage: lfl [directory]\nOutput one name of the latest updated file in specified directory.  default of directory is current directory.\nThis software don't support specification of multiple directories yet." );
 STATIC_CONSTEXPR jig::STRING::Literal USAGE_DIRECTORY( "--directory: Specify search directories.\n  ( This option is always specified if none is specified )." );
 STATIC_CONSTEXPR jig::STRING::Literal USAGE_HELP( "--help: Display this message." );
 STATIC_CONSTEXPR jig::STRING::Literal USAGE_VERSION( "--version: Display the version of this application." );
