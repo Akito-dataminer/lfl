@@ -381,7 +381,6 @@ int main( int argc, char const * argv [] ) {
 
       if ( help_list.size() == 0 ) {
         Display<HELP_MESSAGE>( std::cout );
-        return 0;
       } else {
         for ( auto itr : help_list ) {
           if ( itr == "help" ) { Display<USAGE_HELP>( std::cout ); }
@@ -389,6 +388,7 @@ int main( int argc, char const * argv [] ) {
           if ( itr == "directory" ) { Display<USAGE_DIRECTORY>( std::cout ); }
         }
       }
+      return 0;
     }
 
     if ( cmd_line.isThere( "version" ) ) {
