@@ -9,6 +9,7 @@
 #include "jig/option.hpp"
 
 // std
+#include <algorithm>
 #include <cstring>
 #include <fileapi.h>
 #include <iostream>
@@ -167,27 +168,25 @@ public:
 
   constexpr std::pair<std::string, std::string> get();
 
-  constexpr inline bool isThereHelp() const noexcept { return is_there_help_; }
+  constexpr inline bool isThereHelp() const noexcept { return ( first_help_index_ ); }
   constexpr inline bool next() noexcept {
-    // std::cerr << "index_ : " << index_ << std::endl;
     index_ += ( arg_list_[index_].isBinomial() ) ? 2 : 1;
-    // std::cerr << "boolean : " << ( index_ >= arg_list_.size() ) << std::endl;
     return ( index_ >= arg_list_.size() );
   }
 
-  constexpr inline bool isEnd() const noexcept { return ( index_ == arg_list_.size() - 1 ); }
+  // constexpr inline bool isEnd() const noexcept { return ( index_ == arg_list_.size() - 1 ); }
 private:
   std::size_t index_;
   container_type arg_list_;
-  bool is_there_help_;
+  int first_help_index_;
 
-  constexpr inline std::size_t lengthAsOption( char const * str ) const noexcept { auto [ ptr, length ] = option_list.isMatch( str ); return ptr != nullptr ? length : 0; }
+  // constexpr inline std::size_t lengthAsOption( char const * str ) const noexcept { auto [ ptr, length ] = option_list.isMatch( str ); return ptr != nullptr ? length : 0; }
 };
 
 // 何個目が二項オプションか、単項オプションか、あるいは、それはオプションかどうか
 // といったような、指定されたオプションの構造を調べる。
 constexpr CmdParse::CmdParse( int const arg_count, char const * arg_chars[] )
-:index_( 0 ), is_there_help_( false ) {
+:index_( 0 ), first_help_index_( -1 ) {
   // オプションの構造解析フェーズ
   for ( std::size_t arg_index = 1; arg_index < arg_count; ++arg_index ) {
     // この時点ではまだ、arg_chars[arg_index]に"--"が付けられているのか、
@@ -200,14 +199,8 @@ constexpr CmdParse::CmdParse( int const arg_count, char const * arg_chars[] )
   }
 
   // --helpがコマンドライン引数に含まれているかどうかを調べる。
-  for ( auto itr : arg_list_ ) {
-    if ( itr.isOption() ) {
-      if ( itr.str() == "help" ) {
-        is_there_help_ = true;
-        break;
-      }
-    }
-  }
+  auto it = std::find_if( arg_list_.begin(), arg_list_.end(), []( CmdArg const & arg ){ return arg.str() == "help"; } );
+  if ( !( it == arg_list_.end() ) ) { first_help_index_ = std::distance( arg_list_.begin(), it ); }
 }
 
 constexpr CmdParse::~CmdParse() {}
@@ -215,7 +208,19 @@ constexpr CmdParse::~CmdParse() {}
 constexpr std::pair<std::string, std::string> CmdParse::get() {
   if ( index_ == arg_list_.size() ) { return std::pair( "", "" ); }
 
-  if ( is_there_help_ ) { return std::pair( "help", arg_list_[index_].str() ); }
+  std::cerr << "first_help_index_ : " << first_help_index_ << std::endl;
+
+  if ( first_help_index_ != -1 ) {
+    if ( arg_list_[index_].str() == "help" ) {
+      if ( arg_list_.size() == 1 ) {
+        return std::pair( "help", "all" );
+      } else {
+        return std::pair( "help", ( index_ == first_help_index_ ) ? "" : arg_list_[index_].str() );
+      }
+    }
+
+    return std::pair( "help", arg_list_[index_].str() );
+  }
 
   if ( arg_list_[index_].isOption() ) {
     if ( arg_list_[index_].isBinomial() ) {
