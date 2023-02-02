@@ -302,13 +302,13 @@ int main( int argc, char const * argv [] ) {
   try {
     CmdLine cmd_line( argc, argv );
 
-    if ( cmd_line.isThere( "help" ) == true ) {
+    if ( cmd_line.isThere( "help" ) ) {
       using namespace message;
       Display<HELP_MESSAGE>( std::cout );
       return 0;
     }
 
-    if ( cmd_line.isThere( "version" ) == true ) {
+    if ( cmd_line.isThere( "version" ) ) {
       using namespace message;
       Display<VERSION>( std::cout );
       return 0;
