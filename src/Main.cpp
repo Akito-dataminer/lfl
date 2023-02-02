@@ -21,7 +21,7 @@
 STATIC_CONSTEXPR char DELIMITER = '\\';
 STATIC_CONSTEXPR char OPTION_SPECIFIER[] = "--";
 STATIC_CONSTEXPR int SPECIFIER_LENGTH = jig::ArraySize( OPTION_SPECIFIER ); // add the NULL character in the string tail.
-STATIC_CONSTEXPR int NULL_EXCLUDE_LENGTH = SPECIFIER_LENGTH - 1;
+STATIC_CONSTEXPR int NULL_EXCLUDE_OS_LENGTH = SPECIFIER_LENGTH - 1;
 STATIC_CONSTEXPR char const * options[] = { "help", "version", "directory" };
 STATIC_CONSTEXPR jig::OPTION::OptionList<
 jig::STRING::Literal<char const *, jig::STRING::Length(options[0])>( options[0] ),
@@ -146,8 +146,8 @@ CmdOption::CmdOption( char const * arg, char const * arg_value ) {
     // オプションでないことが確定する。
     key_ = options[jig::ArraySize( options ) - 1];
     value_ = arg;
-  } else if ( strncmp( arg, OPTION_SPECIFIER, NULL_EXCLUDE_LENGTH ) == 0 ) {
-    char const * key_head = arg + NULL_EXCLUDE_LENGTH;
+  } else if ( strncmp( arg, OPTION_SPECIFIER, NULL_EXCLUDE_OS_LENGTH ) == 0 ) {
+    char const * key_head = arg + NULL_EXCLUDE_OS_LENGTH;
     auto [head_ptr, length] = option_list.isMatch( key_head );
     // std::cerr << "key_head : " << key_head << std::endl;
     // std::cerr << std::string( head_ptr, length ) << std::endl;
